@@ -25,8 +25,8 @@ public class VertexArrayObject {
         // set buffers to bin at the specified binding slots
         vertexAttribdata.forEach((vertexAttribBinding, vertexBufferObject) -> {
             GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vertexBufferObject.getId());
-            GL20.glVertexAttribPointer(vertexAttribBinding.index, vertexAttribBinding.size, vertexBufferObject.getGlDataType(), false, vertexAttribBinding.stride, 0);
-            GL20.glEnableVertexAttribArray(vertexAttribBinding.index);
+            GL20.glVertexAttribPointer(vertexAttribBinding.index, 3, vertexBufferObject.getGlDataType(), false, vertexAttribBinding.stride, 0);
+            //GL20.glEnableVertexAttribArray(vertexAttribBinding.index);
         });
 
         GL30.glBindVertexArray(0);

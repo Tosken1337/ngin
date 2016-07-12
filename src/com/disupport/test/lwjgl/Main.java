@@ -1,5 +1,8 @@
 package com.disupport.test.lwjgl;
 
+import com.tosken.ngin.geometry.Geometry;
+import com.tosken.ngin.geometry.IndexedGeometry;
+import com.tosken.ngin.geometry.loader.GeometryLoaderFactory;
 import com.tosken.ngin.gl.Shader;
 import com.tosken.ngin.gl.ShaderProgram;
 import com.tosken.ngin.gl.VertexArrayObject;
@@ -9,20 +12,17 @@ import org.joml.camera.ArcBallCamera;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GLCapabilities;
+import org.lwjgl.opengl.*;
 
 import java.nio.FloatBuffer;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11.glClear;
-import static org.lwjgl.opengl.GL11.glClearColor;
+import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengles.GLES20.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengles.GLES20.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.system.MemoryUtil.*;
@@ -48,6 +48,8 @@ public class Main {
     private GLFWScrollCallback sCallback;
     private float zoom = 10;
     private ArcBallCamera cam;
+    private VertexBufferObject vboIndices;
+    private VertexBufferObject vbo;
 
     public void run() {
 
@@ -173,10 +175,10 @@ public class Main {
         initResources();
 
         // Set the clear color
-        glClearColor(0.6f, 0.6f, 0.6f, 0.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         projMat = new Matrix4f().perspective(((float) Math.toRadians(50.0f)), 1024f / 768f, 0.1f, 100f);
-        viewMat = new Matrix4f().lookAt(0.0f, 0.0f, 5.0f,
+        viewMat = new Matrix4f().lookAt(0.0f, 0.0f, 2.0f,
                         0.0f, 0.0f, 0.0f,
                         0.0f, 1.0f, 0.0f);
 
@@ -212,6 +214,7 @@ public class Main {
 
             final Matrix4f matrix4f = cam.viewMatrix(viewMat.identity());
 
+            GL11.glEnable(GL_DEPTH_TEST);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 
             prog.bind();
@@ -219,8 +222,14 @@ public class Main {
             prog.setUniform("projectionMat", projMat);
 
             vao.bind();
-            //GL20.glEnableVertexAttribArray(0);
-            GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
+            GL20.glEnableVertexAttribArray(0);
+
+            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices.getId());
+
+            //GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
+            GL11.glDrawElements(GL11.GL_TRIANGLES, vboIndices.size(), GL11.GL_UNSIGNED_INT, 0);
+
+            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
 
             vao.unbind();
             prog.unbind();
@@ -239,16 +248,30 @@ public class Main {
             final Shader frag = Shader.createFromFile("/com/disupport/test/lwjgl/resources/simpleFrag.glsl", Shader.Type.Fragment);
             prog = ShaderProgram.create(Arrays.asList(vert, frag));
 
-            float[] vertices = new float[]{
-                    0.0f,  0.5f, 0.0f,
-                    -0.5f, -0.5f, 0.0f,
-                    0.5f, -0.5f, 0.0f
+            float[] vertices = {
+                    -0.5f, 0.5f, 0f,    // Left top         ID: 0
+                    -0.5f, -0.5f, 0f,   // Left bottom      ID: 1
+                    0.5f, -0.5f, 0f,    // Right bottom     ID: 2
+                    0.5f, 0.5f, 0f  // Right left       ID: 3
             };
 
-            final VertexBufferObject vbo = VertexBufferObject.from(vertices);
+            int[] indices = {
+                    // Left bottom triangle
+                    0, 1, 2,
+                    // Right top triangle
+                    2, 3, 0
+            };
+
+            final IndexedGeometry model = ((IndexedGeometry) GeometryLoaderFactory.create(GeometryLoaderFactory.Format.OBJ).load(Paths.get("cube.obj")));
+
+
+            vbo = VertexBufferObject.from(model.vertexData());
+            vboIndices = VertexBufferObject.fromIndices(model.indexData());
+            //vbo = VertexBufferObject.from(vertices);
+            //vboIndices = VertexBufferObject.fromIndices(indices);
             final Map<VertexArrayObject.VertexAttribBinding, VertexBufferObject> binding = new HashMap() {
                 {
-                    put(new VertexArrayObject.VertexAttribBinding(0, 3, 0), vbo);
+                    put(new VertexArrayObject.VertexAttribBinding(0, vbo.size(), 0), vbo);
                 }
             };
 
