@@ -48,6 +48,6 @@ public class TextureCache {
             textureFile = Paths.get("resources", resource).toFile();
         }
 
-        return Texture.loadTexture(textureFile.toString(), attributes);
+        return Texture.loadTexture(textureFile.toString(), attributes, false);
     }
 }

@@ -43,7 +43,7 @@ public class Main {
     private int mouseX;
     private int mouseY;
     private GLFWScrollCallback sCallback;
-    private float zoom = 5;
+    private float zoom = 20;
     private ArcBallCamera cam;
     private VertexBufferObject vboIndices;
     private VertexBufferObject vbo;
@@ -254,7 +254,7 @@ public class Main {
             final Shader frag = Shader.createFromFile("/com/disupport/test/lwjgl/resources/simpleFrag.glsl", Shader.Type.Fragment);
             prog = ShaderProgram.create(Arrays.asList(vert, frag));
 
-            texture = Texture.loadTexture("texture.jpg");
+            texture = Texture.loadTexture("texture.jpg", GL11.GL_LINEAR_MIPMAP_LINEAR, GL11.GL_LINEAR ,GL11.GL_REPEAT, true);
 
 
             // Load model from file and create vao

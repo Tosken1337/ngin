@@ -2,6 +2,8 @@ package com.tosken.ngin.gl;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 
 import javax.imageio.ImageIO;
 import java.awt.geom.AffineTransform;
@@ -44,11 +46,11 @@ public class Texture implements GLResource {
      * @param data Picture Data in RGBA format
      */
     public Texture(int width, int height, ByteBuffer data) {
-        this(width, height, GL_RGBA8, data, GL_LINEAR, GL_CLAMP);
+        this(width, height, GL_RGBA8, data, GL_LINEAR, GL_LINEAR, GL_CLAMP, false);
     }
 
-    public Texture(int width, int height, ByteBuffer data, int filterMode, int wrapMode) {
-        this(width, height, GL_RGBA8, data, filterMode, wrapMode);
+    public Texture(int width, int height, ByteBuffer data, int minFilterMode, int magFilterMode, int wrapMode, boolean mipmap) {
+        this(width, height, GL_RGBA8, data, minFilterMode, magFilterMode, wrapMode, mipmap);
     }
 
     public Texture(int width, int height, int format) {
@@ -76,7 +78,7 @@ public class Texture implements GLResource {
      * @param format    Either GL_RGBA8 or GL_RGB
      * @param data
      */
-    public Texture(int width, int height, int format, ByteBuffer data, int filterMode, int wrapMode) {
+    public Texture(int width, int height, int format, ByteBuffer data, int minFilterMode, int magFilterMode, int wrapMode, boolean mipmap) {
         id = glGenTextures();
         this.width = width;
         this.height = height;
@@ -85,14 +87,21 @@ public class Texture implements GLResource {
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilterMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilterMode);
 
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format == GL_RGBA8 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, data);
+
+        if (mipmap) {
+            GL30.glGenerateMipmap(GL_TEXTURE_2D);
+        }
+
         glBindTexture(GL_TEXTURE_2D, 0);
 
         GLHelper.checkAndThrow();
     }
+
+
 
     /**
      * Binds the texture.
@@ -126,12 +135,12 @@ public class Texture implements GLResource {
         return height;
     }
 
-    public static Texture loadTexture(final String path) {
-        return loadTexture(path, GL_LINEAR, GL_REPEAT);
+    public static Texture loadTexture(final String path, final boolean mipmap) {
+        return loadTexture(path, GL_LINEAR, GL_LINEAR, GL_REPEAT, mipmap);
     }
 
-    public static Texture loadTexture(final String path, final TextureAttributes attributes) {
-        return loadTexture(path, attributes.getFilterMode(), attributes.getWrapMode());
+    public static Texture loadTexture(final String path, final TextureAttributes attributes, final boolean mipmap) {
+        return loadTexture(path, attributes.getFilterMode(), attributes.getFilterMode(), attributes.getWrapMode(), mipmap);
     }
 
     /**
@@ -140,7 +149,7 @@ public class Texture implements GLResource {
      * @param path File path of the texture
      * @return Texture from specified file
      */
-    public static Texture loadTexture(String path, int filterMode, int wrapMode) {
+    public static Texture loadTexture(String path, int minFilterMode, int magFilterMode, int wrapMode, final boolean mipmap) {
         BufferedImage image = null;
         try {
             InputStream in = new FileInputStream(path);
@@ -184,7 +193,7 @@ public class Texture implements GLResource {
             /* Do not forget to flip the buffer! */
             buffer.flip();
 
-            return new Texture(width, height, buffer, filterMode, wrapMode);
+            return new Texture(width, height, buffer, minFilterMode, magFilterMode, wrapMode, mipmap);
         } else {
             throw new RuntimeException("File extension not supported!"
                     + System.lineSeparator() + "The following file extensions "
