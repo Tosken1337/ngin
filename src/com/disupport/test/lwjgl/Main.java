@@ -3,10 +3,7 @@ package com.disupport.test.lwjgl;
 import com.tosken.ngin.geometry.Geometry;
 import com.tosken.ngin.geometry.IndexedGeometry;
 import com.tosken.ngin.geometry.loader.GeometryLoaderFactory;
-import com.tosken.ngin.gl.Shader;
-import com.tosken.ngin.gl.ShaderProgram;
-import com.tosken.ngin.gl.VertexArrayObject;
-import com.tosken.ngin.gl.VertexBufferObject;
+import com.tosken.ngin.gl.*;
 import org.joml.Matrix4f;
 import org.joml.camera.ArcBallCamera;
 import org.lwjgl.BufferUtils;
@@ -46,10 +43,11 @@ public class Main {
     private int mouseX;
     private int mouseY;
     private GLFWScrollCallback sCallback;
-    private float zoom = 10;
+    private float zoom = 5;
     private ArcBallCamera cam;
     private VertexBufferObject vboIndices;
     private VertexBufferObject vbo;
+    private Texture texture;
 
     public void run() {
 
@@ -79,7 +77,7 @@ public class Main {
         // Configure our window
         glfwDefaultWindowHints(); // optional, the current window hints are already the default
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // the window will be resizable
         glfwWindowHint(GLFW_SAMPLES, 4);
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -178,13 +176,15 @@ public class Main {
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         projMat = new Matrix4f().perspective(((float) Math.toRadians(50.0f)), 1024f / 768f, 0.1f, 100f);
-        viewMat = new Matrix4f().lookAt(0.0f, 0.0f, 2.0f,
+        /*viewMat = new Matrix4f().lookAt(0.0f, 0.0f, 1.0f,
                         0.0f, 0.0f, 0.0f,
-                        0.0f, 1.0f, 0.0f);
+                        0.0f, 1.0f, 0.0f);*/
+        viewMat = new Matrix4f();
 
         try {
             prog.createUniform("viewMat");
             prog.createUniform("projectionMat");
+            prog.createUniform("tex");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -196,6 +196,7 @@ public class Main {
         cam = new ArcBallCamera();
         cam.setAlpha((float) Math.toRadians(0));
         cam.setBeta((float) Math.toRadians(0));
+        cam.center(0, 0, 0);
         while ( !glfwWindowShouldClose(window) ) {
             if (down) {
                 cam.setAlpha(cam.getAlpha() + Math.toRadians((x - mouseX) * 0.1f));
@@ -220,9 +221,13 @@ public class Main {
             prog.bind();
             prog.setUniform("viewMat", matrix4f);
             prog.setUniform("projectionMat", projMat);
+            prog.setUniform("tex", 0);
+
+            texture.bind();
 
             vao.bind();
             GL20.glEnableVertexAttribArray(0);
+            GL20.glEnableVertexAttribArray(1);
 
             GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices.getId());
 
@@ -244,15 +249,40 @@ public class Main {
 
     private void initResources() {
         try {
+            // Load shader
             final Shader vert = Shader.createFromFile("/com/disupport/test/lwjgl/resources/simpleVert.glsl", Shader.Type.Vertex);
             final Shader frag = Shader.createFromFile("/com/disupport/test/lwjgl/resources/simpleFrag.glsl", Shader.Type.Fragment);
             prog = ShaderProgram.create(Arrays.asList(vert, frag));
 
+            texture = Texture.loadTexture("texture.jpg");
+
+
+            // Load model from file and create vao
+            /*final IndexedGeometry model = ((IndexedGeometry) GeometryLoaderFactory.create(GeometryLoaderFactory.Format.OBJ).load(Paths.get("cube.obj")));
+            vbo = VertexBufferObject.from(model.vertexData());
+            vboIndices = VertexBufferObject.fromIndices(model.indexData());
+            final Map<VertexArrayObject.VertexAttribBinding, VertexBufferObject> binding = new HashMap<VertexArrayObject.VertexAttribBinding, VertexBufferObject>() {
+                {
+                    put(new VertexArrayObject.VertexAttribBinding(0, 3, 0), vbo);
+                }
+            };
+            vao = VertexArrayObject.create(binding);*/
+
+
+
+            // Create vao from buffer
             float[] vertices = {
                     -0.5f, 0.5f, 0f,    // Left top         ID: 0
                     -0.5f, -0.5f, 0f,   // Left bottom      ID: 1
                     0.5f, -0.5f, 0f,    // Right bottom     ID: 2
-                    0.5f, 0.5f, 0f  // Right left       ID: 3
+                    0.5f, 0.5f, 0f  // Right top       ID: 3
+            };
+
+            float[] texCoords = {
+                    0, 1,
+                    0, 0,
+                    1, 0,
+                    1, 1,
             };
 
             int[] indices = {
@@ -262,20 +292,26 @@ public class Main {
                     2, 3, 0
             };
 
-            final IndexedGeometry model = ((IndexedGeometry) GeometryLoaderFactory.create(GeometryLoaderFactory.Format.OBJ).load(Paths.get("cube.obj")));
 
-
-            vbo = VertexBufferObject.from(model.vertexData());
-            vboIndices = VertexBufferObject.fromIndices(model.indexData());
-            //vbo = VertexBufferObject.from(vertices);
-            //vboIndices = VertexBufferObject.fromIndices(indices);
-            final Map<VertexArrayObject.VertexAttribBinding, VertexBufferObject> binding = new HashMap() {
+            final int numVertices = vertices.length / 3;
+            final int vertexFloatCount = 3;
+            final int texCoordFloatCount = 2;
+            final FloatBuffer bufferData = FloatBuffer.allocate(vertices.length + texCoords.length);
+            for (int i = 0; i < numVertices; i++) {
+                bufferData.put(vertices, i * 3, vertexFloatCount);
+                bufferData.put(texCoords, i * 2, texCoordFloatCount);
+            }
+            bufferData.flip();
+            vbo = VertexBufferObject.from(bufferData.array());
+            vboIndices = VertexBufferObject.fromIndices(indices);
+            final Map<VertexArrayObject.VertexAttribBinding, VertexBufferObject> binding = new HashMap<VertexArrayObject.VertexAttribBinding, VertexBufferObject>() {
                 {
-                    put(new VertexArrayObject.VertexAttribBinding(0, vbo.size(), 0), vbo);
+                    put(new VertexArrayObject.VertexAttribBinding(0, vertexFloatCount,      vertexFloatCount * 4 + texCoordFloatCount * 4,      0), vbo);
+                    put(new VertexArrayObject.VertexAttribBinding(1, texCoordFloatCount,    vertexFloatCount * 4 + texCoordFloatCount * 4,    vertexFloatCount * 4), vbo);
                 }
             };
-
             vao = VertexArrayObject.create(binding);
+
 
         } catch (Exception e) {
             e.printStackTrace();

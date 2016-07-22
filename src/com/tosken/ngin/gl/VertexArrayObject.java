@@ -25,8 +25,8 @@ public class VertexArrayObject {
         // set buffers to bin at the specified binding slots
         vertexAttribdata.forEach((vertexAttribBinding, vertexBufferObject) -> {
             GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vertexBufferObject.getId());
-            GL20.glVertexAttribPointer(vertexAttribBinding.index, 3, vertexBufferObject.getGlDataType(), false, vertexAttribBinding.stride, 0);
-            //GL20.glEnableVertexAttribArray(vertexAttribBinding.index);
+            GL20.glVertexAttribPointer(vertexAttribBinding.index, vertexAttribBinding.size, vertexBufferObject.getGlDataType(), false, vertexAttribBinding.stride, vertexAttribBinding.pointer);
+            GL20.glEnableVertexAttribArray(vertexAttribBinding.index);
         });
 
         GL30.glBindVertexArray(0);
@@ -59,10 +59,24 @@ public class VertexArrayObject {
          */
         public int stride = 0;
 
+        /**
+         * Specifies a offset of the first component of the first generic vertex attribute in the array in the data store of the buffer
+         * currently bound to the GL_ARRAY_BUFFER target.
+         * The initial value is 0.
+         */
+        public int pointer = 0;
+
         public VertexAttribBinding(final int index, final int size, final int stride) {
             this.index = index;
             this.size = size;
             this.stride = stride;
+        }
+
+        public VertexAttribBinding(final int index, final int size, final int stride, final int pointer) {
+            this.index = index;
+            this.size = size;
+            this.stride = stride;
+            this.pointer = pointer;
         }
 
         @Override

@@ -1,8 +1,11 @@
 #version 330
 
-//out vec4 fragColor;
-in float depth;
+
+uniform sampler2D tex;
+
+in vec2 texCoordOut;
 
 void main() {
-    gl_FragColor = vec4(depth, depth, depth, 1.0f);
+    vec4 color = texture2D(tex, texCoordOut.xy);
+    gl_FragColor = vec4(color.rgb, 1.0f);
 }
