@@ -12,6 +12,5 @@ public class ApplicationTest {
 
         final SampleDesktopApplication app = new SampleDesktopApplication();
         app.run(config);
-
     }
 }

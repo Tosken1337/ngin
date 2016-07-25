@@ -82,7 +82,7 @@ public abstract class DesktopApplication extends Application {
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
 
         // Create the window
-        window = glfwCreateWindow(configuration.windowSize.x, configuration.windowSize.y, configuration.windowTitle, NULL, NULL);
+        window = glfwCreateWindow(configuration.windowSize.x, configuration.windowSize.y, configuration.windowTitle, configuration.fullscreen ? glfwGetPrimaryMonitor() : NULL, NULL);
         if (window == NULL) {
             throw new RuntimeException("Failed to create the GLFW window");
         }
@@ -97,7 +97,7 @@ public abstract class DesktopApplication extends Application {
         GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
         if (configuration.fullscreen) {
-            glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, videoMode.width(), videoMode.height(), GLFW_DONT_CARE);
+            //glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, videoMode.width(), videoMode.height(), GLFW_DONT_CARE);
         } else {
             // Center window
             glfwSetWindowPos(
@@ -106,8 +106,6 @@ public abstract class DesktopApplication extends Application {
                     (videoMode.height() - configuration.windowSize.y) / 2
             );
         }
-
-
 
 
         // Make the OpenGL context current
@@ -131,24 +129,50 @@ public abstract class DesktopApplication extends Application {
         glfwSetTime(0);
         double lastTime = 0;
         while (!glfwWindowShouldClose(window)) {
-
             final double currentTime = glfwGetTime();
             final double elapsedMillis = (currentTime - lastTime) * 1000;
             lastTime = currentTime;
+
+            // Let the application perform application updates per frame (physics, input, ...)
+            onUpdateFrame(elapsedMillis);
+
+            // Let the application perform frame rendering
             onRenderFrame(elapsedMillis);
 
+            // Swap the back buffer
             glfwSwapBuffers(window);
 
+            // Poll for input events which will be handled in the next update
             glfwPollEvents();
         }
     }
 
+    /**
+     *
+     * @param elapsedMillis
+     */
+    protected abstract void onUpdateFrame(final double elapsedMillis);
+
+    /**
+     *
+     * @param elapsedMillis
+     */
     protected abstract void onRenderFrame(final double elapsedMillis);
 
+    /**
+     *
+     */
     protected abstract void onInitApplication();
 
+    /**
+     *
+     */
     protected abstract void onInitGL();
 
+    /**
+     *
+     * @param frameBufferSize
+     */
     protected abstract void onFrameBufferSizeChanged(final Vector2i frameBufferSize);
 
     public static class Configuration {
