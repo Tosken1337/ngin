@@ -2,12 +2,13 @@ package com.tosken.ngin.application;
 
 import com.tosken.ngin.oculus.OculusHmd;
 import org.joml.Matrix4f;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 
-import static org.lwjgl.glfw.GLFW.glfwGetTime;
-import static org.lwjgl.glfw.GLFW.glfwPollEvents;
-import static org.lwjgl.glfw.GLFW.glfwSetTime;
+import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
  * Created by Sebastian Greif on 25.07.2016.
@@ -16,6 +17,7 @@ import static org.lwjgl.glfw.GLFW.glfwSetTime;
 public abstract class RiftApplication extends Application {
 
     protected OculusHmd hmd;
+    private long window;
 
     protected RiftApplication() {
     }
@@ -39,6 +41,8 @@ public abstract class RiftApplication extends Application {
 
         log.info("OpenGL version: {}", GL11.glGetString(GL11.GL_VERSION));
         log.info("Vendor: {}", GL11.glGetString(GL11.GL_VENDOR));
+
+        hmd.initGL();
 
         onInitGL();
 
@@ -70,6 +74,46 @@ public abstract class RiftApplication extends Application {
         } catch (Exception e) {
             throw new RuntimeException("Unable to initialize hmd", e);
         }
+
+        // Init glfw and a window for displaying the rift texture also on the monitor
+        GLFWErrorCallback errorCallback = new GLFWErrorCallback() {
+            @Override
+            public void invoke(final int error, final long description) {
+                log.error("glfw error occured. Code: {} - Description: {}", error, description);
+            }
+        };
+        glfwSetErrorCallback(errorCallback);
+
+        org.lwjgl.system.Configuration.DEBUG.set(false);
+
+        if (!glfwInit())
+            throw new IllegalStateException("Unable to initialize GLFW");
+
+        // 1. Setup window related stuff
+        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+
+        // Create the window
+        window = glfwCreateWindow(hmd.getResolutionW() / 2, hmd.getResolutionH(), "Rift", NULL, NULL);
+        if (window == NULL) {
+            throw new RuntimeException("Failed to create the GLFW window");
+        }
+
+        // Get the resolution of the primary monitor
+        GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        glfwSetWindowPos(
+                window,
+                (videoMode.width() - hmd.getResolutionW() / 2) / 2,
+                (videoMode.height() - hmd.getResolutionH()) / 2
+        );
+
+        // Make the OpenGL context current
+        glfwMakeContextCurrent(window);
     }
 
     protected abstract void onInitApplication();

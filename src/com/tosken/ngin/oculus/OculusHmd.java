@@ -1,6 +1,7 @@
 package com.tosken.ngin.oculus;
 
 import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.ovr.*;
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ public class OculusHmd {
     private int textureW;
     private int textureH;
     private Vector3f playerEyePos;
+    private long swapChain;
 
 
     public void init() throws Exception {
@@ -108,6 +110,43 @@ public class OculusHmd {
         }
 
         ovr_RecenterTrackingOrigin(session);
+    }
+
+    public void initGL() {
+        float pixelsPerDisplayPixel = 1.0f;
+
+        OVRSizei leftTextureSize = OVRSizei.malloc();
+        ovr_GetFovTextureSize(session, ovrEye_Left, fovPorts[ovrEye_Left], pixelsPerDisplayPixel, leftTextureSize);
+        log.debug("leftTextureSize W="+leftTextureSize.w() +", H="+ leftTextureSize.h());
+
+        OVRSizei rightTextureSize = OVRSizei.malloc();
+        ovr_GetFovTextureSize(session, ovrEye_Right, fovPorts[ovrEye_Right], pixelsPerDisplayPixel, rightTextureSize);
+        log.debug("rightTextureSize W="+rightTextureSize.w() +", H="+ rightTextureSize.h());
+
+        textureW = leftTextureSize.w() + rightTextureSize.w();
+        textureH = Math.max(leftTextureSize.h(), rightTextureSize.h());
+        log.debug("request textureW=" + textureW + ", textureH=" + textureH);
+        leftTextureSize.free();
+        rightTextureSize.free();
+
+        // TextureSets
+        OVRTextureSwapChainDesc swapChainDesc = OVRTextureSwapChainDesc.calloc()
+                .Type(ovrTexture_2D)
+                .ArraySize(1)
+                .Format(OVR_FORMAT_R8G8B8A8_UNORM_SRGB)
+                .Width(textureW)
+                .Height(textureH)
+                .MipLevels(1)
+                .SampleCount(1)
+                .StaticImage(false);
+
+        PointerBuffer textureSetPB = BufferUtils.createPointerBuffer(1);
+        if (OVRGL.ovr_CreateTextureSwapChainGL(session, swapChainDesc, textureSetPB) != ovrSuccess) {
+            throw new RuntimeException("Failed to create Swap Texture Set");
+        }
+        swapChain = textureSetPB.get(0);
+        swapChainDesc.free();
+        log.info("done chain creation");
     }
 
     public int getResolutionW() {
