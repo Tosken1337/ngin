@@ -21,14 +21,5 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="slf4j" level="project" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://D:/slf4j-simple-1.7.21.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
   </component>
 </module>
