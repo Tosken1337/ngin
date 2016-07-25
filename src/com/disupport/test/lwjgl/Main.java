@@ -10,6 +10,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
+import org.lwjgl.system.Configuration;
 
 import java.nio.FloatBuffer;
 import java.nio.file.Paths;
@@ -32,18 +33,14 @@ public class Main {
     private VertexArrayObject vao;
     private Matrix4f viewMat;
     private Matrix4f projMat;
-    private GLFWFramebufferSizeCallback fbCallback;
     private int width;
     private int height;
-    private GLFWCursorPosCallback cpCallback;
     private int x;
     private int y;
-    private GLFWMouseButtonCallback mbCallback;
     private boolean down;
     private int mouseX;
     private int mouseY;
-    private GLFWScrollCallback sCallback;
-    private float zoom = 20;
+    private float zoom = 3;
     private ArcBallCamera cam;
     private VertexBufferObject vboIndices;
     private VertexBufferObject vbo;
@@ -69,6 +66,8 @@ public class Main {
         // Setup an error callback. The default implementation
         // will print the error message in System.err.
         GLFWErrorCallback.createPrint(System.err).set();
+
+        Configuration.DEBUG.set(true);
 
         // Initialize GLFW. Most GLFW functions will not work before doing this.
         if ( !glfwInit() )
@@ -99,7 +98,7 @@ public class Main {
                 glfwSetWindowShouldClose(window, true); // We will detect this in our rendering loop
         });
 
-        glfwSetFramebufferSizeCallback(window, fbCallback = new GLFWFramebufferSizeCallback() {
+        glfwSetFramebufferSizeCallback(window, new GLFWFramebufferSizeCallback() {
             @Override
             public void invoke(long window, int w, int h) {
                 if (w > 0 && h > 0) {
@@ -108,14 +107,14 @@ public class Main {
                 }
             }
         });
-        glfwSetCursorPosCallback(window, cpCallback = new GLFWCursorPosCallback() {
+        glfwSetCursorPosCallback(window, new GLFWCursorPosCallback() {
             @Override
             public void invoke(long window, double xpos, double ypos) {
                 x = (int) xpos - width / 2;
                 y = height / 2 - (int) ypos;
             }
         });
-        glfwSetMouseButtonCallback(window, mbCallback = new GLFWMouseButtonCallback() {
+        glfwSetMouseButtonCallback(window, new GLFWMouseButtonCallback() {
             @Override
             public void invoke(long window, int button, int action, int mods) {
                 if (action == GLFW_PRESS) {
@@ -127,16 +126,14 @@ public class Main {
                 }
             }
         });
-        glfwSetScrollCallback(window, sCallback = new GLFWScrollCallback() {
-            @Override
-            public void invoke(long window, double xoffset, double yoffset) {
-                if (yoffset > 0) {
-                    zoom /= 1.1f;
-                } else {
-                    zoom *= 1.1f;
-                }
+
+        glfwSetScrollCallback(window, GLFWScrollCallback.create((window1, xoffset, yoffset) -> {
+            if (yoffset > 0) {
+                zoom /= 1.1f;
+            } else {
+                zoom *= 1.1f;
             }
-        });
+        }));
 
         // Get the resolution of the primary monitor
         GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -166,6 +163,8 @@ public class Main {
         // creates the GLCapabilities instance and makes the OpenGL
         // bindings available for use.
         GL.createCapabilities();
+
+
 
         System.out.println("OpenGL: " + GL11.glGetString(GL11.GL_VERSION));
         System.out.println("Vendor: " + GL11.glGetString(GL11.GL_VENDOR));
@@ -259,7 +258,7 @@ public class Main {
 
             // Load model from file and create vao
             /*final IndexedGeometry model = ((IndexedGeometry) GeometryLoaderFactory.create(GeometryLoaderFactory.Format.OBJ).load(Paths.get("cube.obj")));
-            vbo = VertexBufferObject.from(model.vertexData());
+            vbo = VertexBufferObject.from(model.positionData());
             vboIndices = VertexBufferObject.fromIndices(model.indexData());
             final Map<VertexArrayObject.VertexAttribBinding, VertexBufferObject> binding = new HashMap<VertexArrayObject.VertexAttribBinding, VertexBufferObject>() {
                 {

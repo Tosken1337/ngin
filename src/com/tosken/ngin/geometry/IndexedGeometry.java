@@ -1,17 +1,24 @@
 package com.tosken.ngin.geometry;
 
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Sebastian Greif on 29.06.2016.
  * Copyright di support 2016
  */
 public class IndexedGeometry extends Geometry {
-    private ArrayList<Integer> indices;
+    private List<Integer> indices;
 
-    public IndexedGeometry(final ArrayList<Vector3f> vertices, final ArrayList<Integer> indices) {
+    public IndexedGeometry(final ArrayList<Vector3f> vertices, final ArrayList<Vector2f> texCoords, final ArrayList<Integer> indices) {
+        super(vertices, texCoords);
+        this.indices = indices;
+    }
+
+    public IndexedGeometry(final ArrayList<Vector3f> vertices, final List<Integer> indices) {
         super(vertices);
         this.indices = indices;
     }
