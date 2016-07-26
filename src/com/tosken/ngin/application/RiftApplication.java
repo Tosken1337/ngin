@@ -6,6 +6,7 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -57,12 +58,20 @@ public abstract class RiftApplication extends Application {
 
         onInitGL();
 
+        GL11.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
+
         Matrix4f viewM = new Matrix4f();
         Matrix4f projM = new Matrix4f();
 
         glfwSetTime(0);
         double lastTime = 0;
         while (!glfwWindowShouldClose(window)) {
+            if (!hmd.update()) {
+                return;
+            }
+
+
+
             final double currentTime = glfwGetTime();
             final double elapsedMillis = (currentTime - lastTime) * 1000;
             lastTime = currentTime;
@@ -112,7 +121,7 @@ public abstract class RiftApplication extends Application {
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
             if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
                 glfwSetWindowShouldClose(window, true);
-            } else if (key != GLFW_KEY_ESCAPE){
+            } else if (key != GLFW_KEY_ESCAPE) {
                 onKeyEvent(action, key);
             }
         });

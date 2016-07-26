@@ -37,7 +37,8 @@ public class OculusHmd {
     private final OVRFovPort fovPorts[] = new OVRFovPort[2];
     private final OVRPosef eyePoses[] = new OVRPosef[2];
     private final OVREyeRenderDesc eyeRenderDesc[] = new OVREyeRenderDesc[2];
-    private OVRLayerEyeFov layer0;
+    OVRVector3f.Buffer hmdToEyeOffsets = OVRVector3f.calloc(2);
+    private OVRLayerEyeFov vrEyesLayer;
     private int textureW;
     private int textureH;
     private Vector3f playerEyePos;
@@ -111,8 +112,8 @@ public class OculusHmd {
         // render desc
         for (int eye = 0; eye < 2; eye++) {
             eyeRenderDesc[eye] = OVREyeRenderDesc.malloc();
-            ovr_GetRenderDesc(session, eye,  fovPorts[eye], eyeRenderDesc[eye]);
-            log.debug("ipd eye "+eye+" = "+eyeRenderDesc[eye].HmdToEyeOffset().x());
+            ovr_GetRenderDesc(session, eye, fovPorts[eye], eyeRenderDesc[eye]);
+            hmdToEyeOffsets.put(eye, eyeRenderDesc[eye].HmdToEyeOffset());
         }
 
         ovr_RecenterTrackingOrigin(session);
@@ -175,6 +176,68 @@ public class OculusHmd {
             swapChainFbo[i].addColorAttachment(texture, 0);
             swapChainFbo[i].addDefaultDepthStencil(textureW, textureH);
         }
+
+
+        // @TODO Check this code
+        // eye viewports
+        OVRRecti viewport[] = new OVRRecti[2];
+        viewport[0] = OVRRecti.calloc();
+        viewport[0].Pos().x(0);
+        viewport[0].Pos().y(0);
+        viewport[0].Size().w(textureW / 2);
+        viewport[0].Size().h(textureH);
+
+        viewport[1] = OVRRecti.calloc();
+        viewport[1].Pos().x(textureW / 2);
+        viewport[1].Pos().y(0);
+        viewport[1].Size().w(textureW / 2);
+        viewport[1].Size().h(textureH);
+
+        // single layer to present a VR scene
+        vrEyesLayer = OVRLayerEyeFov.calloc();
+        vrEyesLayer.Header().Type(ovrLayerType_EyeFov);
+        vrEyesLayer.Header().Flags(ovrLayerFlag_TextureOriginAtBottomLeft);
+        for (int eye = 0; eye < 2; eye++) {
+            // @TODO Check this code
+            vrEyesLayer.ColorTexture(textureSetPB);
+            //vrEyesLayer.ColorTexture(eye, textureSetPB.address0());
+            //vrEyesLayer.ColorTexture(eye, textureSetPB.get());
+            vrEyesLayer.Viewport(eye, viewport[eye]);
+            vrEyesLayer.Fov(eye, fovPorts[eye]);
+
+            viewport[eye].free();
+        }
+    }
+
+    public boolean update() {
+        ovr_GetSessionStatus(session, sessionStatus);
+        if  (!sessionStatus.IsVisible() || sessionStatus.ShouldQuit()) {
+            return false;
+        }
+
+        if (sessionStatus.ShouldRecenter()) {
+            ovr_RecenterTrackingOrigin(session);
+        }
+
+
+        // Get both eye poses simultaneously, with IPD offset already included.
+        // displayMidpointSeconds is the time when the frame will be presented to the user on the hmd (compensate latency)
+        double displayMidpointSeconds  = ovr_GetPredictedDisplayTime(session, 0);
+        OVRTrackingState hmdState = OVRTrackingState.malloc();
+        ovr_GetTrackingState(session, displayMidpointSeconds, true, hmdState);
+
+        // get head pose and free hmdState
+        OVRPosef headPose = hmdState.HeadPose().ThePose();
+        hmdState.free();
+
+        //calculate eye poses
+        OVRPosef.Buffer outEyePoses = OVRPosef.create(2);
+        OVRUtil.ovr_CalcEyePoses(headPose, hmdToEyeOffsets, outEyePoses);
+
+        eyePoses[ovrEye_Left] = outEyePoses.get(0);
+        eyePoses[ovrEye_Right] = outEyePoses.get(1);
+
+        return true;
     }
 
     public int getResolutionW() {
