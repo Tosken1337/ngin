@@ -1,5 +1,6 @@
 package com.tosken.ngin.application;
 
+import com.tosken.ngin.gl.FrameBufferObject;
 import com.tosken.ngin.oculus.OculusHmd;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -70,8 +71,6 @@ public abstract class RiftApplication extends Application {
                 return;
             }
 
-
-
             final double currentTime = glfwGetTime();
             final double elapsedMillis = (currentTime - lastTime) * 1000;
             lastTime = currentTime;
@@ -80,8 +79,12 @@ public abstract class RiftApplication extends Application {
             onUpdateFrame(elapsedMillis);
 
             //@TODO call those for each eye with different matrices (hmd.getView(lefteye), ...)
-            // Let the application perform frame rendering
-            onRenderFrame(elapsedMillis, viewM, projM);
+            for(int eye = 0; eye < 2; eye++) {
+                // Let the application perform frame rendering for each eye
+                onRenderFrame(elapsedMillis, viewM, projM, hmd.getCurrentFrameBuffer());
+            }
+
+            hmd.endFrame();
 
             // Poll for input events which will be handled in the next update
             glfwPollEvents();
@@ -118,6 +121,13 @@ public abstract class RiftApplication extends Application {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
 
+
+        // Create the window
+        window = glfwCreateWindow(hmd.getResolutionW() / 2, hmd.getResolutionH(), "Rift", NULL, NULL);
+        if (window == NULL) {
+            throw new RuntimeException("Failed to create the GLFW window");
+        }
+
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
             if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
                 glfwSetWindowShouldClose(window, true);
@@ -125,12 +135,6 @@ public abstract class RiftApplication extends Application {
                 onKeyEvent(action, key);
             }
         });
-
-        // Create the window
-        window = glfwCreateWindow(hmd.getResolutionW() / 2, hmd.getResolutionH(), "Rift", NULL, NULL);
-        if (window == NULL) {
-            throw new RuntimeException("Failed to create the GLFW window");
-        }
 
         // Get the resolution of the primary monitor
         GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -150,7 +154,7 @@ public abstract class RiftApplication extends Application {
 
     protected abstract void onUpdateFrame(double elapsedMillis);
 
-    protected abstract void onRenderFrame(double elapsedMillis, Matrix4f eyeViewM, Matrix4f projM);
+    protected abstract void onRenderFrame(double elapsedMillis, Matrix4f eyeViewM, Matrix4f projM, FrameBufferObject currentFrameBuffer);
 
     protected abstract void onCloseApplication();
 

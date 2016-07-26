@@ -45,6 +45,7 @@ public class OculusHmd {
     private long swapChain;
 
     private FrameBufferObject[] swapChainFbo;
+    private PointerBuffer layers;
 
 
     public void init() throws Exception {
@@ -156,7 +157,7 @@ public class OculusHmd {
         swapChainDesc.free();
 
         // create FrameBuffers for Oculus SDK generated textures
-        int textureCount = 0;
+        int textureCount = 0; // texture count is the number of back buffers in the swap chain allowing double or drible buffering.
         IntBuffer chainLengthB = BufferUtils.createIntBuffer(1);
         ovr_GetTextureSwapChainLength(session, textureSetPB.get(0), chainLengthB);
         textureCount = chainLengthB.get();
@@ -207,6 +208,9 @@ public class OculusHmd {
 
             viewport[eye].free();
         }
+
+        layers = BufferUtils.createPointerBuffer(1);
+        layers.put(0, vrEyesLayer);
     }
 
     public boolean update() {
@@ -240,6 +244,14 @@ public class OculusHmd {
         return true;
     }
 
+    public void endFrame() {
+        ovr_CommitTextureSwapChain(session, swapChain);
+        int result = ovr_SubmitFrame(session, 0, null, layers);
+        if (result != ovrSuccess) {
+            System.out.println("failed submit");
+        }
+    }
+
     public int getResolutionW() {
         return resolutionW;
     }
@@ -250,5 +262,12 @@ public class OculusHmd {
 
     public void destroy() {
         //@TODO destroy swap chain and free fields
+    }
+
+    public FrameBufferObject getCurrentFrameBuffer() {
+        IntBuffer currentIndexB = BufferUtils.createIntBuffer(1);
+        ovr_GetTextureSwapChainCurrentIndex(session, swapChain, currentIndexB);
+        int index = currentIndexB.get();
+        return swapChainFbo[index];
     }
 }
