@@ -8,6 +8,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.ovr.OVRRecti;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -68,7 +69,7 @@ public abstract class RiftApplication extends Application {
         double lastTime = 0;
         while (!glfwWindowShouldClose(window)) {
             if (!hmd.update()) {
-                return;
+                continue;
             }
 
             final double currentTime = glfwGetTime();
@@ -81,6 +82,8 @@ public abstract class RiftApplication extends Application {
             //@TODO call those for each eye with different matrices (hmd.getView(lefteye), ...)
             for(int eye = 0; eye < 2; eye++) {
                 // Let the application perform frame rendering for each eye
+                final OVRRecti viewport = hmd.getViewport(eye);
+                GL11.glViewport(viewport.Pos().x(), viewport.Pos().y(), viewport.Size().w(), viewport.Size().h());
                 onRenderFrame(elapsedMillis, viewM, projM, hmd.getCurrentFrameBuffer());
             }
 

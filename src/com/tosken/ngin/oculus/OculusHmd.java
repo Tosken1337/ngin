@@ -201,8 +201,7 @@ public class OculusHmd {
         for (int eye = 0; eye < 2; eye++) {
             // @TODO Check this code
             vrEyesLayer.ColorTexture(textureSetPB);
-            //vrEyesLayer.ColorTexture(eye, textureSetPB.address0());
-            //vrEyesLayer.ColorTexture(eye, textureSetPB.get());
+            //vrEyesLayer.ColorTexture(eye, swapChain);
             vrEyesLayer.Viewport(eye, viewport[eye]);
             vrEyesLayer.Fov(eye, fovPorts[eye]);
 
@@ -224,6 +223,7 @@ public class OculusHmd {
         }
 
 
+
         // Get both eye poses simultaneously, with IPD offset already included.
         // displayMidpointSeconds is the time when the frame will be presented to the user on the hmd (compensate latency)
         double displayMidpointSeconds  = ovr_GetPredictedDisplayTime(session, 0);
@@ -240,6 +240,9 @@ public class OculusHmd {
 
         eyePoses[ovrEye_Left] = outEyePoses.get(0);
         eyePoses[ovrEye_Right] = outEyePoses.get(1);
+
+        final OVRVector3f position = eyePoses[ovrEye_Left].Position();
+        log.debug("Eye position x: {}, y: {}, z:{}", position.x(), position.y(), position.z());
 
         return true;
     }
@@ -258,6 +261,10 @@ public class OculusHmd {
 
     public int getResolutionH() {
         return resolutionH;
+    }
+
+    public OVRRecti getViewport(final int eye) {
+        return vrEyesLayer.Viewport(eye);
     }
 
     public void destroy() {
