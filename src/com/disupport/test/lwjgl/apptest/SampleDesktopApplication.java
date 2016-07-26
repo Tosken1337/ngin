@@ -140,6 +140,16 @@ public class SampleDesktopApplication extends DesktopApplication {
     }
 
     @Override
+    protected void onCloseApplication() {
+        log.debug("onCloseApplication");
+    }
+
+    @Override
+    protected void onKeyEvent(final int action, final int key) {
+        log.debug("onKeyEvent");
+    }
+
+    @Override
     protected void onFrameBufferSizeChanged(final Vector2i frameBufferSize) {
         if (frameBufferSize.x > 0) {
             GL11.glViewport(0, 0, frameBufferSize.x, frameBufferSize.y);

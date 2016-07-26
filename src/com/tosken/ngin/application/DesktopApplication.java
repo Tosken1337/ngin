@@ -7,6 +7,8 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 
+import java.nio.IntBuffer;
+
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
@@ -46,6 +48,8 @@ public abstract class DesktopApplication extends Application {
 
             // Start gl loop
             glLoop();
+
+            onCloseApplication();
 
             // Free the window callbacks and destroy the window
             glfwFreeCallbacks(window);
@@ -93,11 +97,24 @@ public abstract class DesktopApplication extends Application {
             onFrameBufferSizeChanged(frameBufferSize);
         }));
 
+        glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
+            if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+                glfwSetWindowShouldClose(window, true);
+            } else if (key != GLFW_KEY_ESCAPE){
+                onKeyEvent(action, key);
+            }
+        });
+
+        // Make the OpenGL context current
+        glfwMakeContextCurrent(window);
+
         // Get the resolution of the primary monitor
         GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
         if (configuration.fullscreen) {
-            //glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, videoMode.width(), videoMode.height(), GLFW_DONT_CARE);
+            frameBufferSize.set(videoMode.width(), videoMode.height());
+            GL.createCapabilities();
+            onFrameBufferSizeChanged(frameBufferSize);
         } else {
             // Center window
             glfwSetWindowPos(
@@ -106,10 +123,6 @@ public abstract class DesktopApplication extends Application {
                     (videoMode.height() - configuration.windowSize.y) / 2
             );
         }
-
-
-        // Make the OpenGL context current
-        glfwMakeContextCurrent(window);
 
         // Enable v-sync
         glfwSwapInterval(configuration.vSync ? 1 : 0);
@@ -168,6 +181,18 @@ public abstract class DesktopApplication extends Application {
      *
      */
     protected abstract void onInitGL();
+
+    /**
+     *
+     */
+    protected abstract void onCloseApplication();
+
+    /**
+     *
+     * @param action
+     * @param key
+     */
+    protected abstract void onKeyEvent(final int action, final int key);
 
     /**
      *

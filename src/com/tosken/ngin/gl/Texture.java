@@ -27,16 +27,22 @@ public class Texture implements GLResource {
     /**
      * Stores the handle of the texture.
      */
-    private final int id;
+    private int id;
 
     /**
      * Width of the texture.
      */
-    private final int width;
+    private int width;
     /**
      * Height of the texture.
      */
-    private final int height;
+    private int height;
+
+    private Texture() {
+        id = 0;
+        width = -1;
+        height = -1;
+    }
 
     /**
      * Creates a texture with specified width, height and data.
@@ -133,6 +139,22 @@ public class Texture implements GLResource {
      */
     public int getHeight() {
         return height;
+    }
+
+    /**
+     * Wraps an existing texture generated with gl functions
+     * @param textureId
+     * @param width
+     * @param height
+     * @return
+     */
+    public static Texture wrap(final int textureId, final int width, final int height) {
+        final Texture tex = new Texture();
+        tex.id = textureId;
+        tex.width = width;
+        tex.height = height;
+
+        return tex;
     }
 
     public static Texture loadTexture(final String path, final boolean mipmap) {

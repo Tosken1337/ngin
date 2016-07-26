@@ -1,11 +1,15 @@
 package com.tosken.ngin.oculus;
 
+import com.tosken.ngin.gl.FrameBufferObject;
+import com.tosken.ngin.gl.Texture;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.ovr.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.IntBuffer;
 
 import static org.lwjgl.ovr.OVR.*;
 import static org.lwjgl.ovr.OVRErrorCode.ovrSuccess;
@@ -38,6 +42,8 @@ public class OculusHmd {
     private int textureH;
     private Vector3f playerEyePos;
     private long swapChain;
+
+    private FrameBufferObject[] swapChainFbo;
 
 
     public void init() throws Exception {
@@ -144,9 +150,31 @@ public class OculusHmd {
         if (OVRGL.ovr_CreateTextureSwapChainGL(session, swapChainDesc, textureSetPB) != ovrSuccess) {
             throw new RuntimeException("Failed to create Swap Texture Set");
         }
+
         swapChain = textureSetPB.get(0);
         swapChainDesc.free();
-        log.info("done chain creation");
+
+        // create FrameBuffers for Oculus SDK generated textures
+        int textureCount = 0;
+        IntBuffer chainLengthB = BufferUtils.createIntBuffer(1);
+        ovr_GetTextureSwapChainLength(session, textureSetPB.get(0), chainLengthB);
+        textureCount = chainLengthB.get();
+        System.out.println("chain length="+textureCount);
+
+        swapChainFbo = new FrameBufferObject[textureCount];
+        for (int i = 0; i < textureCount; i++) {
+            IntBuffer textureIdB = BufferUtils.createIntBuffer(1);
+            // Get texture id of the texture
+            OVRGL.ovr_GetTextureSwapChainBufferGL(session, swapChain, i, textureIdB);
+            int textureId = textureIdB.get();
+            System.out.println("textureId="+textureId);
+
+            Texture texture = Texture.wrap(textureId, textureW, textureH);
+
+            swapChainFbo[i] = FrameBufferObject.create();
+            swapChainFbo[i].addColorAttachment(texture, 0);
+            swapChainFbo[i].addDefaultDepthStencil(textureW, textureH);
+        }
     }
 
     public int getResolutionW() {
@@ -155,5 +183,9 @@ public class OculusHmd {
 
     public int getResolutionH() {
         return resolutionH;
+    }
+
+    public void destroy() {
+        //@TODO destroy swap chain and free fields
     }
 }

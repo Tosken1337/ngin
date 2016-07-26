@@ -7,6 +7,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
@@ -32,7 +33,17 @@ public abstract class RiftApplication extends Application {
 
             // Start gl loop
             glLoop();
+
+            onCloseApplication();
+
+            hmd.destroy();
+
+            // Free the window callbacks and destroy the window
+            glfwFreeCallbacks(window);
+            glfwDestroyWindow(window);
         } finally {
+            glfwTerminate();
+            glfwSetErrorCallback(null).free();
         }
     }
 
@@ -46,19 +57,20 @@ public abstract class RiftApplication extends Application {
 
         onInitGL();
 
-        glfwSetTime(0);
-        double lastTime = 0;
         Matrix4f viewM = new Matrix4f();
         Matrix4f projM = new Matrix4f();
 
-        while (true) {
+        glfwSetTime(0);
+        double lastTime = 0;
+        while (!glfwWindowShouldClose(window)) {
             final double currentTime = glfwGetTime();
             final double elapsedMillis = (currentTime - lastTime) * 1000;
             lastTime = currentTime;
 
-            // Let the application perform application updates per frame (physics, input, ...)
+            // Let the application perform application updates per frame (physics, input, ...) (once per eye)
             onUpdateFrame(elapsedMillis);
 
+            //@TODO call those for each eye with different matrices (hmd.getView(lefteye), ...)
             // Let the application perform frame rendering
             onRenderFrame(elapsedMillis, viewM, projM);
 
@@ -83,20 +95,27 @@ public abstract class RiftApplication extends Application {
             }
         };
         glfwSetErrorCallback(errorCallback);
-
         org.lwjgl.system.Configuration.DEBUG.set(false);
 
         if (!glfwInit())
             throw new IllegalStateException("Unable to initialize GLFW");
 
-        // 1. Setup window related stuff
-        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+        // Setup window related stuff (non visible dummy window for gl context creation)
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+
+        glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
+            if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+                glfwSetWindowShouldClose(window, true);
+            } else if (key != GLFW_KEY_ESCAPE){
+                onKeyEvent(action, key);
+            }
+        });
 
         // Create the window
         window = glfwCreateWindow(hmd.getResolutionW() / 2, hmd.getResolutionH(), "Rift", NULL, NULL);
@@ -123,6 +142,10 @@ public abstract class RiftApplication extends Application {
     protected abstract void onUpdateFrame(double elapsedMillis);
 
     protected abstract void onRenderFrame(double elapsedMillis, Matrix4f eyeViewM, Matrix4f projM);
+
+    protected abstract void onCloseApplication();
+
+    protected abstract void onKeyEvent(final int action, final int key);
 
 
     public static class Configuration {
