@@ -195,6 +195,18 @@ public class OculusHmd {
         viewport[1].Size().w(textureW / 2);
         viewport[1].Size().h(textureH);
 
+        /*viewport[0] = OVRRecti.calloc();
+        viewport[0].Pos().x(0);
+        viewport[0].Pos().y(0);
+        viewport[0].Size().w(textureW);
+        viewport[0].Size().h(textureH);
+
+        viewport[1] = OVRRecti.calloc();
+        viewport[1].Pos().x(0);
+        viewport[1].Pos().y(0);
+        viewport[1].Size().w(textureW);
+        viewport[1].Size().h(textureH);*/
+
 
         // single layer to present a VR scene
         //@TODO check: Viewport: - The rectangle of the texture that is actually used, specified in 0-1 texture "UV" coordinate space (not pixels).
@@ -244,6 +256,7 @@ public class OculusHmd {
         eyePoses[ovrEye_Right] = outEyePoses.get(1);
         vrEyesLayer.RenderPose(ovrEye_Left, eyePoses[ovrEye_Left]);
         vrEyesLayer.RenderPose(ovrEye_Right, eyePoses[ovrEye_Right]);
+        //vrEyesLayer.SensorSampleTime();
 
         final OVRVector3f position = eyePoses[ovrEye_Left].Position();
         log.debug("Eye position x: {}, y: {}, z:{}", position.x(), position.y(), position.z());
@@ -273,7 +286,21 @@ public class OculusHmd {
     }
 
     public void destroy() {
-        //@TODO destroy swap chain and free fields
+        for (int eye = 0; eye < 2; eye++) {
+            projections[eye].free();
+        }
+        for (int eye = 0; eye < 2; eye++) {
+            eyeRenderDesc[eye].free();
+        }
+
+        vrEyesLayer.free();
+        sessionStatus.free();
+
+        if (swapChain != 0) {
+            ovr_DestroyTextureSwapChain(session, swapChain);
+        }
+        ovr_Destroy(session);
+        ovr_Shutdown();
     }
 
     public FrameBufferObject getCurrentFrameBuffer() {
