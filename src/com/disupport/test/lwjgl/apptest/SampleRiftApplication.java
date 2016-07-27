@@ -23,6 +23,9 @@ public class SampleRiftApplication extends RiftApplication {
     @Override
     protected void onRenderFrame(double elapsedMillis, Matrix4f eyeViewM, Matrix4f projM, FrameBufferObject currentFrameBuffer) {
         currentFrameBuffer.bind();
+        if (!currentFrameBuffer.isComplete()) {
+            throw new RuntimeException("asd");
+        }
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         currentFrameBuffer.unbind();
     }

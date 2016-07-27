@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.ovr.OVR.*;
+import static org.lwjgl.ovr.OVRErrorCode.ovrError_DisplayLost;
 import static org.lwjgl.ovr.OVRErrorCode.ovrSuccess;
 import static org.lwjgl.ovr.OVRKeys.OVR_KEY_EYE_HEIGHT;
 import static org.lwjgl.ovr.OVRUtil.ovr_Detect;
@@ -157,11 +158,11 @@ public class OculusHmd {
         swapChainDesc.free();
 
         // create FrameBuffers for Oculus SDK generated textures
-        int textureCount = 0; // texture count is the number of back buffers in the swap chain allowing double or drible buffering.
+        int textureCount = 0; // texture count is the number of back buffers in the swap chain allowing double or dribble buffering.
         IntBuffer chainLengthB = BufferUtils.createIntBuffer(1);
         ovr_GetTextureSwapChainLength(session, textureSetPB.get(0), chainLengthB);
         textureCount = chainLengthB.get();
-        System.out.println("chain length="+textureCount);
+        log.debug("chain length="+textureCount);
 
         swapChainFbo = new FrameBufferObject[textureCount];
         for (int i = 0; i < textureCount; i++) {
@@ -169,7 +170,7 @@ public class OculusHmd {
             // Get texture id of the texture
             OVRGL.ovr_GetTextureSwapChainBufferGL(session, swapChain, i, textureIdB);
             int textureId = textureIdB.get();
-            System.out.println("textureId="+textureId);
+            log.debug("Creating fbo for swap chain texture {} using texture id {}", i, textureId);
 
             Texture texture = Texture.wrap(textureId, textureW, textureH);
 
@@ -179,7 +180,7 @@ public class OculusHmd {
         }
 
 
-        // @TODO Check this code
+        // //@TODO check: Viewport: - The rectangle of the texture that is actually used, specified in 0-1 texture "UV" coordinate space (not pixels).
         // eye viewports
         OVRRecti viewport[] = new OVRRecti[2];
         viewport[0] = OVRRecti.calloc();
@@ -194,12 +195,13 @@ public class OculusHmd {
         viewport[1].Size().w(textureW / 2);
         viewport[1].Size().h(textureH);
 
+
         // single layer to present a VR scene
+        //@TODO check: Viewport: - The rectangle of the texture that is actually used, specified in 0-1 texture "UV" coordinate space (not pixels).
         vrEyesLayer = OVRLayerEyeFov.calloc();
         vrEyesLayer.Header().Type(ovrLayerType_EyeFov);
         vrEyesLayer.Header().Flags(ovrLayerFlag_TextureOriginAtBottomLeft);
         for (int eye = 0; eye < 2; eye++) {
-            // @TODO Check this code
             vrEyesLayer.ColorTexture(textureSetPB);
             //vrEyesLayer.ColorTexture(eye, swapChain);
             vrEyesLayer.Viewport(eye, viewport[eye]);
@@ -213,10 +215,10 @@ public class OculusHmd {
     }
 
     public boolean update() {
-        ovr_GetSessionStatus(session, sessionStatus);
+        /*ovr_GetSessionStatus(session, sessionStatus);
         if  (!sessionStatus.IsVisible() || sessionStatus.ShouldQuit()) {
             return false;
-        }
+        }*/
 
         if (sessionStatus.ShouldRecenter()) {
             ovr_RecenterTrackingOrigin(session);
@@ -240,6 +242,8 @@ public class OculusHmd {
 
         eyePoses[ovrEye_Left] = outEyePoses.get(0);
         eyePoses[ovrEye_Right] = outEyePoses.get(1);
+        vrEyesLayer.RenderPose(ovrEye_Left, eyePoses[ovrEye_Left]);
+        vrEyesLayer.RenderPose(ovrEye_Right, eyePoses[ovrEye_Right]);
 
         final OVRVector3f position = eyePoses[ovrEye_Left].Position();
         log.debug("Eye position x: {}, y: {}, z:{}", position.x(), position.y(), position.z());
@@ -247,12 +251,13 @@ public class OculusHmd {
         return true;
     }
 
-    public void endFrame() {
+    public boolean endFrame() {
         ovr_CommitTextureSwapChain(session, swapChain);
         int result = ovr_SubmitFrame(session, 0, null, layers);
-        if (result != ovrSuccess) {
-            System.out.println("failed submit");
+        if (result == ovrError_DisplayLost) {
+            throw new RuntimeException("Display lost. Need to recreate it");
         }
+        return result == ovrSuccess;
     }
 
     public int getResolutionW() {

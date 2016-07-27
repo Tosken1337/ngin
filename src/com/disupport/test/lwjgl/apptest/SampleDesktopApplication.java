@@ -13,8 +13,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
-import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengles.GLES20.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengles.GLES20.GL_DEPTH_BUFFER_BIT;
 
@@ -32,6 +31,8 @@ public class SampleDesktopApplication extends DesktopApplication {
     private VertexBufferObject vbo;
     private Texture texture;
 
+    private FrameBufferObject fbo;
+
     @Override
     protected void onUpdateFrame(final double elapsedMillis) {
 
@@ -39,6 +40,8 @@ public class SampleDesktopApplication extends DesktopApplication {
 
     @Override
     protected void onRenderFrame(final double elapsedMillis) {
+        //fbo.bind();
+        //GL11.glClearColor(1f, 0.3f, 0.4f, 1f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         prog.bind();
@@ -54,13 +57,41 @@ public class SampleDesktopApplication extends DesktopApplication {
 
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices.getId());
 
-        //GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
         GL11.glDrawElements(GL11.GL_TRIANGLES, vboIndices.size(), GL11.GL_UNSIGNED_INT, 0);
 
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
 
         vao.unbind();
         prog.unbind();
+        texture.unbind();
+
+        //fbo.unbind();
+
+
+        /*GL11.glClearColor(80f / 255f, 140f / 255f, 164f / 255f, 1f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        prog.bind();
+        prog.setUniform("viewMat", viewMat);
+        prog.setUniform("projectionMat", projMat);
+        prog.setUniform("tex", 0);
+
+        fbo.getColorAttachment(0).get().bind();
+
+        vao.bind();
+        GL20.glEnableVertexAttribArray(0);
+        GL20.glEnableVertexAttribArray(1);
+
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIndices.getId());
+
+        GL11.glDrawElements(GL11.GL_TRIANGLES, vboIndices.size(), GL11.GL_UNSIGNED_INT, 0);
+
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        vao.unbind();
+        prog.unbind();
+        fbo.getColorAttachment(0).get().unbind();*/
+
     }
 
     @Override
@@ -73,6 +104,16 @@ public class SampleDesktopApplication extends DesktopApplication {
         log.info("onInitGL");
         GL11.glClearColor(80f / 255f, 140f / 255f, 164f / 255f, 1f);
         GL11.glEnable(GL_DEPTH_TEST);
+
+        fbo = FrameBufferObject.create();
+        //
+        final Texture fboTex = new Texture(1280, 768, GL_RGBA8);
+        fbo.addColorAttachment(fboTex, 0);
+        fbo.addDefaultDepthStencil(1280, 768);
+        fbo.unbind();
+        if (!fbo.isComplete()) {
+            throw new RuntimeException("Fbo not complete");
+        }
 
         try {
             // Load shader
@@ -152,6 +193,7 @@ public class SampleDesktopApplication extends DesktopApplication {
     @Override
     protected void onFrameBufferSizeChanged(final Vector2i frameBufferSize) {
         if (frameBufferSize.x > 0) {
+            log.info("Framebuffer size changed to {} x {}", frameBufferSize.x, frameBufferSize.y);
             GL11.glViewport(0, 0, frameBufferSize.x, frameBufferSize.y);
 
             projMat = new Matrix4f().perspective(((float) Math.toRadians(50.0f)), (float)frameBufferSize.x / (float)frameBufferSize.y, 0.1f, 100f);

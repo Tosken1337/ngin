@@ -42,6 +42,7 @@ public class FrameBufferObject implements GLResource {
         GL30.glFramebufferTexture2D(
                 GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0 + attachmentIndex, GL11.GL_TEXTURE_2D, attachment.getId(), 0);
         GLHelper.checkAndThrow();
+        unbind();
         this.colorAttachements.put(attachmentIndex, attachment);
         return this;
     }
@@ -56,10 +57,10 @@ public class FrameBufferObject implements GLResource {
         GL30.glFramebufferRenderbuffer(
                 GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_STENCIL_ATTACHMENT, GL30.GL_RENDERBUFFER, rboDepthStencilId);
         GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER, 0);
-
+        GLHelper.checkAndThrow();
+        unbind();
         renderBufferObjectIds.add(rboDepthStencilId);
 
-        GLHelper.checkAndThrow();
         return this;
     }
 

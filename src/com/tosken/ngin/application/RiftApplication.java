@@ -67,27 +67,31 @@ public abstract class RiftApplication extends Application {
 
         glfwSetTime(0);
         double lastTime = 0;
+        boolean isVisible = true;
         while (!glfwWindowShouldClose(window)) {
             if (!hmd.update()) {
-                continue;
+                //continue;
             }
 
-            final double currentTime = glfwGetTime();
-            final double elapsedMillis = (currentTime - lastTime) * 1000;
-            lastTime = currentTime;
+            if (isVisible) {
+                final double currentTime = glfwGetTime();
+                final double elapsedMillis = (currentTime - lastTime) * 1000;
+                lastTime = currentTime;
 
-            // Let the application perform application updates per frame (physics, input, ...) (once per eye)
-            onUpdateFrame(elapsedMillis);
+                final FrameBufferObject currentFrameBuffer = hmd.getCurrentFrameBuffer();
 
-            //@TODO call those for each eye with different matrices (hmd.getView(lefteye), ...)
-            for(int eye = 0; eye < 2; eye++) {
-                // Let the application perform frame rendering for each eye
-                final OVRRecti viewport = hmd.getViewport(eye);
-                GL11.glViewport(viewport.Pos().x(), viewport.Pos().y(), viewport.Size().w(), viewport.Size().h());
-                onRenderFrame(elapsedMillis, viewM, projM, hmd.getCurrentFrameBuffer());
+                // Let the application perform application updates per frame (physics, input, ...) (once per eye)
+                onUpdateFrame(elapsedMillis);
+
+                for(int eye = 0; eye < 2; eye++) {
+                    // Let the application perform frame rendering for each eye
+                    final OVRRecti viewport = hmd.getViewport(eye);
+                    GL11.glViewport(viewport.Pos().x(), viewport.Pos().y(), viewport.Size().w(), viewport.Size().h());
+                    onRenderFrame(elapsedMillis, viewM, projM, currentFrameBuffer);
+                }
             }
 
-            hmd.endFrame();
+            isVisible = hmd.endFrame();
 
             // Poll for input events which will be handled in the next update
             glfwPollEvents();
@@ -116,7 +120,7 @@ public abstract class RiftApplication extends Application {
             throw new IllegalStateException("Unable to initialize GLFW");
 
         // Setup window related stuff (non visible dummy window for gl context creation)
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
