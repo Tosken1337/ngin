@@ -5,6 +5,9 @@ import com.tosken.ngin.gl.Texture;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL20;
 import org.lwjgl.ovr.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,6 +176,7 @@ public class OculusHmd {
             log.debug("Creating fbo for swap chain texture {} using texture id {}", i, textureId);
 
             Texture texture = Texture.wrap(textureId, textureW, textureH);
+            //texture.setParameters(GL11.GL_LINEAR, GL13.GL_CLAMP_TO_BORDER);
 
             swapChainFbo[i] = FrameBufferObject.create();
             swapChainFbo[i].addColorAttachment(texture, 0);
@@ -213,8 +217,9 @@ public class OculusHmd {
         vrEyesLayer = OVRLayerEyeFov.calloc();
         vrEyesLayer.Header().Type(ovrLayerType_EyeFov);
         vrEyesLayer.Header().Flags(ovrLayerFlag_TextureOriginAtBottomLeft);
+        vrEyesLayer.ColorTexture(textureSetPB);
         for (int eye = 0; eye < 2; eye++) {
-            vrEyesLayer.ColorTexture(textureSetPB);
+            //vrEyesLayer.ColorTexture(textureSetPB);
             //vrEyesLayer.ColorTexture(eye, swapChain);
             vrEyesLayer.Viewport(eye, viewport[eye]);
             vrEyesLayer.Fov(eye, fovPorts[eye]);
@@ -235,7 +240,6 @@ public class OculusHmd {
         if (sessionStatus.ShouldRecenter()) {
             ovr_RecenterTrackingOrigin(session);
         }
-
 
 
         // Get both eye poses simultaneously, with IPD offset already included.

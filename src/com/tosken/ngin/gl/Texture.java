@@ -108,6 +108,16 @@ public class Texture implements GLResource {
     }
 
 
+    public void setParameters(final int filterMode, final int wrapMode) {
+        glBindTexture(GL_TEXTURE_2D, id);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+
 
     /**
      * Binds the texture.
@@ -245,4 +255,6 @@ public class Texture implements GLResource {
     public void free() {
         glDeleteTextures(id);
     }
+
+
 }
