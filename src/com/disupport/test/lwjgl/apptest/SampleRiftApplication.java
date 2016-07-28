@@ -6,14 +6,14 @@ import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
-import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengles.GLES20.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengles.GLES20.GL_DEPTH_BUFFER_BIT;
 
@@ -36,13 +36,20 @@ public class SampleRiftApplication extends RiftApplication {
 
     }
 
+    private float[][] clearColors = new float[][]{{1f, 0, 0}, {1f, 1f, 0f}};
+    int colorIndex = 0;
+
     @Override
     protected void onRenderFrame(double elapsedMillis, Matrix4f eyeViewM, Matrix4f projM, FrameBufferObject currentFrameBuffer) {
         currentFrameBuffer.bind();
         if (!currentFrameBuffer.isComplete()) {
-            throw new RuntimeException("asd");
+            throw new RuntimeException("Framebuffer not complete");
         }
 
+        glClearColor(clearColors[colorIndex][0], clearColors[colorIndex][1], clearColors[colorIndex][2], 1);
+        colorIndex = (colorIndex + 1) % 2;
+
+        GL11.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         prog.bind();

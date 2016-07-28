@@ -54,6 +54,9 @@ public class OculusHmd {
     private PointerBuffer layers;
     private boolean recenter;
 
+    FrameBufferObject mirrorTextureFbo;
+    private long mirrorTextureChain;
+
 
     public void init() throws Exception {
         OVRDetectResult detect = OVRDetectResult.calloc();
@@ -395,6 +398,11 @@ public class OculusHmd {
         if (swapChain != 0) {
             ovr_DestroyTextureSwapChain(session, swapChain);
         }
+
+        if (mirrorTextureFbo != null && mirrorTextureChain != 0) {
+            ovr_DestroyMirrorTexture(session, mirrorTextureChain);
+        }
+
         ovr_Destroy(session);
         ovr_Shutdown();
     }
@@ -407,34 +415,36 @@ public class OculusHmd {
     }
 
     public FrameBufferObject getMirrorTexture(final int windowW, final int windowH) {
-        // Create mirror texture and an FBO used to copy mirror texture to back buffer
-        PointerBuffer outMirrorTexture = BufferUtils.createPointerBuffer(1);
-        OVRMirrorTextureDesc desc = OVRMirrorTextureDesc.calloc()
-                .Format(OVR_FORMAT_R8G8B8A8_UNORM_SRGB)
-                .Width(windowW)
-                .Height(windowH);
-        int result = OVRGL.ovr_CreateMirrorTextureGL(session, desc, outMirrorTexture);
-        if (result != ovrSuccess) {
-            log.warn("Error");
-        }
-        long mirrorTextureChain = outMirrorTexture.get(0);
+        if (mirrorTextureFbo == null) {
+            // Create mirror texture and an FBO used to copy mirror texture to back buffer
+            PointerBuffer outMirrorTexture = BufferUtils.createPointerBuffer(1);
+            OVRMirrorTextureDesc desc = OVRMirrorTextureDesc.calloc()
+                    .Format(OVR_FORMAT_R8G8B8A8_UNORM_SRGB)
+                    .Width(windowW)
+                    .Height(windowH);
+            int result = OVRGL.ovr_CreateMirrorTextureGL(session, desc, outMirrorTexture);
+            if (result != ovrSuccess) {
+                log.warn("Error");
+            }
+            mirrorTextureChain = outMirrorTexture.get(0);
 
-        final IntBuffer mirrorTextureId = BufferUtils.createIntBuffer(1);
-        result = OVRGL.ovr_GetMirrorTextureBufferGL(session, mirrorTextureChain, mirrorTextureId);
-        if (result != ovrSuccess) {
-            OVRErrorInfo error = OVRErrorInfo.calloc();
-            ovr_GetLastErrorInfo(error);
-            final String s = error.ErrorStringString();
-            log.warn(" " + s);
+            final IntBuffer mirrorTextureId = BufferUtils.createIntBuffer(1);
+            result = OVRGL.ovr_GetMirrorTextureBufferGL(session, mirrorTextureChain, mirrorTextureId);
+            if (result != ovrSuccess) {
+                OVRErrorInfo error = OVRErrorInfo.calloc();
+                ovr_GetLastErrorInfo(error);
+                final String s = error.ErrorStringString();
+                log.warn(" " + s);
+            }
+
+            mirrorTextureFbo = FrameBufferObject.create(GL30.GL_READ_FRAMEBUFFER);
+            mirrorTextureFbo.addColorAttachment(Texture.wrap(mirrorTextureId.get(0), windowW, windowH), 0);
+            mirrorTextureFbo.addDefaultDepthStencil(windowW, windowH);
+            if (!mirrorTextureFbo.isComplete()) {
+                log.error("error");
+            }
         }
 
-        final FrameBufferObject mirrorReadFbo = FrameBufferObject.create(GL30.GL_READ_FRAMEBUFFER);
-        mirrorReadFbo.addColorAttachment(Texture.wrap(mirrorTextureId.get(0), windowW, windowH), 0);
-        mirrorReadFbo.addDefaultDepthStencil(windowW, windowH);
-        if (!mirrorReadFbo.isComplete()) {
-            log.error("error");
-        }
-
-        return mirrorReadFbo;
+        return mirrorTextureFbo;
     }
 }
