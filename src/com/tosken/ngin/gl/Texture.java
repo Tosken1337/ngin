@@ -245,7 +245,7 @@ public class Texture implements GLResource {
     public void bind(int textureUnit) {
         glActiveTexture(GL13.GL_TEXTURE0 + textureUnit);
         bind();
-    };
+    }
 
     public void unbind() {
         glBindTexture(GL_TEXTURE_2D, 0);
