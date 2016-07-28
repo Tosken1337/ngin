@@ -92,8 +92,8 @@ public abstract class RiftApplication extends Application {
                     GL11.glViewport(viewport.Pos().x(), viewport.Pos().y(), viewport.Size().w(), viewport.Size().h());
                     onRenderFrame(elapsedMillis, viewM, projM, currentFrameBuffer);
 
-                    hmd.commitFrame();
                 }
+                hmd.commitFrame();
             }
 
             isVisible = hmd.endFrame();
