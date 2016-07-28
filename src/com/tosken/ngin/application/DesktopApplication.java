@@ -101,6 +101,7 @@ public abstract class DesktopApplication extends Application {
             if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
                 glfwSetWindowShouldClose(window, true);
             } else if (key != GLFW_KEY_ESCAPE){
+                keyboard.onKeyEvent(action, key);
                 onKeyEvent(action, key);
             }
         });

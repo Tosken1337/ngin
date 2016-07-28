@@ -3,6 +3,7 @@ package com.disupport.test.lwjgl.apptest;
 import com.tosken.ngin.application.RiftApplication;
 import com.tosken.ngin.gl.*;
 import org.joml.Matrix4f;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
@@ -13,6 +14,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE;
+import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengles.GLES20.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengles.GLES20.GL_DEPTH_BUFFER_BIT;
@@ -83,7 +86,9 @@ public class SampleRiftApplication extends RiftApplication {
 
     @Override
     protected void onKeyEvent(int action, int key) {
-
+        if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE) {
+            hmd.recenter();
+        }
     }
 
     @Override
