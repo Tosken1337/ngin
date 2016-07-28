@@ -326,11 +326,8 @@ public class OculusHmd {
     public Matrix4f getViewMatrix(final int eye) {
         final OVRPosef eyePose = eyePoses[eye];
 
-        Matrix4f mat = new Matrix4f();
+        /*Matrix4f mat = new Matrix4f();
         mat.identity();
-
-        /*Vector3f offsetPosition = new Vector3f(eyeRenderDesc[eye].HmdToEyeOffset().x(), eyeRenderDesc[eye].HmdToEyeOffset().y(), eyeRenderDesc[eye].HmdToEyeOffset().z());
-        mat.translate(offsetPosition);*/
 
         Quaternionf orientation = new Quaternionf(eyePose.Orientation().x(), eyePose.Orientation().y(), eyePose.Orientation().z(), eyePose.Orientation().w());
         orientation.invert();
@@ -342,7 +339,38 @@ public class OculusHmd {
         Vector3f scenePlayerPosition = new Vector3f(0, 0, -2);
         mat.translate(scenePlayerPosition);
 
-        return mat;
+        return mat;*/
+
+
+
+        // player / head position and rotation in the scene (@TODO should be fetched from application)
+        Matrix4f playerRotation = new Matrix4f();
+        playerRotation.identity();
+        Vector3f playerPosition = new Vector3f(0, 0, -2);
+
+        // Current eye position
+        Vector3f eyePosition = new Vector3f(eyePose.Position().x(), eyePose.Position().y(), eyePose.Position().z());
+
+        // Transform current eye orientation to matrix
+        Quaternionf eyeOrientation = new Quaternionf(eyePose.Orientation().x(), eyePose.Orientation().y(), eyePose.Orientation().z(), eyePose.Orientation().w());
+        eyeOrientation.invert();
+        Matrix4f eyeOrientationM = new Matrix4f();
+        eyeOrientationM = eyeOrientation.get(eyeOrientationM);
+
+        // Compute absolute eye position and rotation
+        Vector3f transformedEyePos = playerPosition.add(playerRotation.transformPosition(eyePosition));
+        Matrix4f transformedEyeRot = playerRotation.mul(eyeOrientationM);
+
+        final Vector3f up = transformedEyeRot.transformDirection(new Vector3f(0, 1, 0));
+        final Vector3f forward = transformedEyeRot.transformDirection(new Vector3f(0, 0, -1));
+        final Vector3f lookAt = new Vector3f(transformedEyePos).add(forward);
+
+        final Matrix4f viewMatrix = new Matrix4f()
+                .lookAt(transformedEyePos, lookAt, up);
+
+
+        return viewMatrix;
+
     }
 
     public OVRRecti getViewport(final int eye) {
