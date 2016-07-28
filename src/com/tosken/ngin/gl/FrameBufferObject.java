@@ -15,10 +15,11 @@ public class FrameBufferObject implements GLResource {
     private int id;
     private Map<Integer, Texture> colorAttachements;
     private List<Integer> renderBufferObjectIds;
+    private int frameBufferTarget = GL30.GL_FRAMEBUFFER;
 
     private FrameBufferObject() {}
 
-    public static FrameBufferObject create() {
+    public static FrameBufferObject create(int frameBufferTarget) {
         int bufferId = GL30.glGenFramebuffers();
         if (bufferId <= 0) {
             throw new RuntimeException("");
@@ -29,7 +30,12 @@ public class FrameBufferObject implements GLResource {
         fbo.colorAttachements = new HashMap<>();
         fbo.renderBufferObjectIds = new ArrayList<>();
         fbo.id = bufferId;
+        fbo.frameBufferTarget = frameBufferTarget;
         return fbo;
+    }
+
+    public static FrameBufferObject create() {
+        return create(GL30.GL_FRAMEBUFFER);
     }
 
     public FrameBufferObject addColorAttachment(int width, int height, int format, int attachmentIndex) {
@@ -40,7 +46,7 @@ public class FrameBufferObject implements GLResource {
     public FrameBufferObject addColorAttachment(final Texture attachment, int attachmentIndex) {
         bind();
         GL30.glFramebufferTexture2D(
-                GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0 + attachmentIndex, GL11.GL_TEXTURE_2D, attachment.getId(), 0);
+                frameBufferTarget, GL30.GL_COLOR_ATTACHMENT0 + attachmentIndex, GL11.GL_TEXTURE_2D, attachment.getId(), 0);
         GLHelper.checkAndThrow();
         unbind();
         this.colorAttachements.put(attachmentIndex, attachment);
@@ -55,7 +61,7 @@ public class FrameBufferObject implements GLResource {
 
         bind();
         GL30.glFramebufferRenderbuffer(
-                GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_STENCIL_ATTACHMENT, GL30.GL_RENDERBUFFER, rboDepthStencilId);
+                frameBufferTarget, GL30.GL_DEPTH_STENCIL_ATTACHMENT, GL30.GL_RENDERBUFFER, rboDepthStencilId);
         GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER, 0);
         GLHelper.checkAndThrow();
         unbind();
@@ -85,7 +91,7 @@ public class FrameBufferObject implements GLResource {
      * @return  The framebuffer object for fluent api use
      */
     public FrameBufferObject bind() {
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, id);
+        GL30.glBindFramebuffer(frameBufferTarget, id);
         return this;
     }
 
@@ -94,7 +100,7 @@ public class FrameBufferObject implements GLResource {
      * @return  The framebuffer object for fluent api use
      */
     public FrameBufferObject unbind() {
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+        GL30.glBindFramebuffer(frameBufferTarget, 0);
         return this;
     }
 

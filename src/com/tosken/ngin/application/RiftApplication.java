@@ -60,10 +60,9 @@ public abstract class RiftApplication extends Application {
 
         onInitGL();
 
-        GL11.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
+        final FrameBufferObject mirrorTextureFbo = hmd.getMirrorTexture(hmd.getResolutionW(), hmd.getResolutionH());
 
-        Matrix4f viewM = new Matrix4f();
-        Matrix4f projM = new Matrix4f();
+        GL11.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
 
         glfwSetTime(0);
         double lastTime = 0;
@@ -86,12 +85,26 @@ public abstract class RiftApplication extends Application {
                 for(int eye = 0; eye < 2; eye++) {
                     // Let the application perform frame rendering for each eye
                     final OVRRecti viewport = hmd.getViewport(eye);
+                    final Matrix4f projM = hmd.getProjectionMatrix(eye);
+                    final Matrix4f viewM = hmd.getViewMatrix(eye);
+
+                    //log.debug("Viewport {} x: {}, y:{}, w: {}, h: {}", eye, viewport.Pos().x(), viewport.Pos().y(), viewport.Size().w(), viewport.Size().h());
                     GL11.glViewport(viewport.Pos().x(), viewport.Pos().y(), viewport.Size().w(), viewport.Size().h());
                     onRenderFrame(elapsedMillis, viewM, projM, currentFrameBuffer);
                 }
             }
 
             isVisible = hmd.endFrame();
+
+
+            // Blit mirror texture
+            mirrorTextureFbo.bind();
+
+            GL30.glBlitFramebuffer(0, hmd.getResolutionH(), hmd.getResolutionW(), 0, 0, 0, hmd.getResolutionW(), hmd.getResolutionH(), GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
+            mirrorTextureFbo.unbind();
+
+            // Swap the back buffer
+            glfwSwapBuffers(window);
 
             // Poll for input events which will be handled in the next update
             glfwPollEvents();
@@ -130,7 +143,7 @@ public abstract class RiftApplication extends Application {
 
 
         // Create the window
-        window = glfwCreateWindow(hmd.getResolutionW() / 2, hmd.getResolutionH(), "Rift", NULL, NULL);
+        window = glfwCreateWindow(hmd.getResolutionW(), hmd.getResolutionH(), "Rift", NULL, NULL);
         if (window == NULL) {
             throw new RuntimeException("Failed to create the GLFW window");
         }

@@ -2,12 +2,14 @@ package com.tosken.ngin.oculus;
 
 import com.tosken.ngin.gl.FrameBufferObject;
 import com.tosken.ngin.gl.Texture;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
-import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.ovr.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,6 +122,7 @@ public class OculusHmd {
             ovr_GetRenderDesc(session, eye, fovPorts[eye], eyeRenderDesc[eye]);
             hmdToEyeOffsets.put(eye, eyeRenderDesc[eye].HmdToEyeOffset());
         }
+        log.debug("HmdToEyeOffset: {}, {}", eyeRenderDesc[0].HmdToEyeOffset(), eyeRenderDesc[1].HmdToEyeOffset());
 
         ovr_RecenterTrackingOrigin(session);
     }
@@ -176,7 +179,7 @@ public class OculusHmd {
             log.debug("Creating fbo for swap chain texture {} using texture id {}", i, textureId);
 
             Texture texture = Texture.wrap(textureId, textureW, textureH);
-            //texture.setParameters(GL11.GL_LINEAR, GL13.GL_CLAMP_TO_BORDER);
+            texture.setParameters(GL11.GL_LINEAR, GL13.GL_CLAMP_TO_BORDER);
 
             swapChainFbo[i] = FrameBufferObject.create();
             swapChainFbo[i].addColorAttachment(texture, 0);
@@ -187,7 +190,7 @@ public class OculusHmd {
         // //@TODO check: Viewport: - The rectangle of the texture that is actually used, specified in 0-1 texture "UV" coordinate space (not pixels).
         // eye viewports
         OVRRecti viewport[] = new OVRRecti[2];
-        viewport[0] = OVRRecti.calloc();
+        /*viewport[0] = OVRRecti.calloc();
         viewport[0].Pos().x(0);
         viewport[0].Pos().y(0);
         viewport[0].Size().w(textureW / 2);
@@ -197,9 +200,9 @@ public class OculusHmd {
         viewport[1].Pos().x(textureW / 2);
         viewport[1].Pos().y(0);
         viewport[1].Size().w(textureW / 2);
-        viewport[1].Size().h(textureH);
+        viewport[1].Size().h(textureH);*/
 
-        /*viewport[0] = OVRRecti.calloc();
+        viewport[0] = OVRRecti.calloc();
         viewport[0].Pos().x(0);
         viewport[0].Pos().y(0);
         viewport[0].Size().w(textureW);
@@ -209,7 +212,7 @@ public class OculusHmd {
         viewport[1].Pos().x(0);
         viewport[1].Pos().y(0);
         viewport[1].Size().w(textureW);
-        viewport[1].Size().h(textureH);*/
+        viewport[1].Size().h(textureH);
 
 
         // single layer to present a VR scene
@@ -217,10 +220,9 @@ public class OculusHmd {
         vrEyesLayer = OVRLayerEyeFov.calloc();
         vrEyesLayer.Header().Type(ovrLayerType_EyeFov);
         vrEyesLayer.Header().Flags(ovrLayerFlag_TextureOriginAtBottomLeft);
-        vrEyesLayer.ColorTexture(textureSetPB);
         for (int eye = 0; eye < 2; eye++) {
             //vrEyesLayer.ColorTexture(textureSetPB);
-            //vrEyesLayer.ColorTexture(eye, swapChain);
+            vrEyesLayer.ColorTexture(eye, swapChain);
             vrEyesLayer.Viewport(eye, viewport[eye]);
             vrEyesLayer.Fov(eye, fovPorts[eye]);
 
@@ -262,8 +264,9 @@ public class OculusHmd {
         vrEyesLayer.RenderPose(ovrEye_Right, eyePoses[ovrEye_Right]);
         //vrEyesLayer.SensorSampleTime();
 
-        final OVRVector3f position = eyePoses[ovrEye_Left].Position();
-        log.debug("Eye position x: {}, y: {}, z:{}", position.x(), position.y(), position.z());
+        /*final OVRVector3f positionL = eyePoses[ovrEye_Left].Position();
+        final OVRVector3f positionR = eyePoses[ovrEye_Right].Position();
+        log.debug("L x: {}, y: {}, z:{} ---- R x: {}, y: {}, z:{}", positionL.x(), positionL.y(), positionL.z(), positionR.x(), positionR.y(), positionR.z());*/
 
         return true;
     }
@@ -283,6 +286,32 @@ public class OculusHmd {
 
     public int getResolutionH() {
         return resolutionH;
+    }
+
+    public Matrix4f getProjectionMatrix(final int eye) {
+        return new Matrix4f(projections[eye].M()).transpose();
+    }
+
+    public Matrix4f getViewMatrix(final int eye) {
+        final OVRPosef eyePose = eyePoses[eye];
+
+        Matrix4f mat = new Matrix4f();
+        mat.identity();
+
+        /*Vector3f offsetPosition = new Vector3f(eyeRenderDesc[eye].HmdToEyeOffset().x(), eyeRenderDesc[eye].HmdToEyeOffset().y(), eyeRenderDesc[eye].HmdToEyeOffset().z());
+        mat.translate(offsetPosition);*/
+
+        Quaternionf orientation = new Quaternionf(eyePose.Orientation().x(), eyePose.Orientation().y(), eyePose.Orientation().z(), eyePose.Orientation().w());
+        orientation.invert();
+        mat.rotate(orientation);
+
+        Vector3f position = new Vector3f(-eyePose.Position().x(), -eyePose.Position().y(), -eyePose.Position().z());
+        mat.translate(position);
+
+        Vector3f scenePlayerPosition = new Vector3f(0, 0, -2);
+        mat.translate(scenePlayerPosition);
+
+        return mat;
     }
 
     public OVRRecti getViewport(final int eye) {
@@ -312,5 +341,50 @@ public class OculusHmd {
         ovr_GetTextureSwapChainCurrentIndex(session, swapChain, currentIndexB);
         int index = currentIndexB.get();
         return swapChainFbo[index];
+    }
+
+    public FrameBufferObject getMirrorTexture(final int windowW, final int windowH) {
+        // Create mirror texture and an FBO used to copy mirror texture to back buffer
+        PointerBuffer outMirrorTexture = BufferUtils.createPointerBuffer(1);
+        OVRMirrorTextureDesc desc = OVRMirrorTextureDesc.calloc()
+                .Format(OVR_FORMAT_R8G8B8A8_UNORM_SRGB)
+                .Width(windowW)
+                .Height(windowH);
+        int result = OVRGL.ovr_CreateMirrorTextureGL(session, desc, outMirrorTexture);
+        if (result != ovrSuccess) {
+            log.warn("Error");
+        }
+        long mirrorTextureChain = outMirrorTexture.get(0);
+
+        final IntBuffer mirrorTextureId = BufferUtils.createIntBuffer(1);
+        result = OVRGL.ovr_GetMirrorTextureBufferGL(session, mirrorTextureChain, mirrorTextureId);
+        if (result != ovrSuccess) {
+            OVRErrorInfo error = OVRErrorInfo.calloc();
+            ovr_GetLastErrorInfo(error);
+            final String s = error.ErrorStringString();
+            log.warn(" " + s);
+        }
+
+        final FrameBufferObject mirrorReadFbo = FrameBufferObject.create(GL30.GL_READ_FRAMEBUFFER);
+        mirrorReadFbo.addColorAttachment(Texture.wrap(mirrorTextureId.get(0), windowW, windowH), 0);
+        mirrorReadFbo.addDefaultDepthStencil(windowW, windowH);
+        if (!mirrorReadFbo.isComplete()) {
+            log.error("aaaaadads");
+        }
+
+        return mirrorReadFbo;
+
+        /*OVRGLTexture texture = new OVRGLTexture(MemoryUtil.memByteBuffer(hMT, OVRGLTexture.SIZEOF));
+        int mirrorTextureId = texture.getOGLTexId();
+
+        // Configure the mirror read buffer
+        int mirrorFBId = ARBFramebufferObject.glGenFramebuffers();
+        ARBFramebufferObject.glBindFramebuffer(ARBFramebufferObject.GL_READ_FRAMEBUFFER, mirrorFBId);
+        ARBFramebufferObject.glFramebufferTexture2D(ARBFramebufferObject.GL_READ_FRAMEBUFFER, ARBFramebufferObject.GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirrorTextureId, 0);
+        ARBFramebufferObject.glFramebufferRenderbuffer(ARBFramebufferObject.GL_READ_FRAMEBUFFER, ARBFramebufferObject.GL_DEPTH_ATTACHMENT, ARBFramebufferObject.GL_RENDERBUFFER, 0);
+        ARBFramebufferObject.glBindFramebuffer(ARBFramebufferObject.GL_READ_FRAMEBUFFER, 0);
+
+
+        return mirrorFBId;*/
     }
 }
