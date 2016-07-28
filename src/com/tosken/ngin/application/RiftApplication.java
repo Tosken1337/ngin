@@ -12,6 +12,9 @@ import org.lwjgl.ovr.OVRRecti;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengles.GLES20.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengles.GLES20.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
@@ -78,6 +81,9 @@ public abstract class RiftApplication extends Application {
                 lastTime = currentTime;
 
                 final FrameBufferObject currentFrameBuffer = hmd.getCurrentFrameBuffer();
+                currentFrameBuffer.bind();
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                currentFrameBuffer.unbind();
 
                 // Let the application perform application updates per frame (physics, input, ...) (once per eye)
                 onUpdateFrame(elapsedMillis);

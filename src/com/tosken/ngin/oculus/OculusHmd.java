@@ -20,7 +20,6 @@ import java.nio.IntBuffer;
 import static org.lwjgl.ovr.OVR.*;
 import static org.lwjgl.ovr.OVRErrorCode.ovrError_DisplayLost;
 import static org.lwjgl.ovr.OVRErrorCode.ovrSuccess;
-import static org.lwjgl.ovr.OVRKeys.OVR_KEY_EYE_HEIGHT;
 import static org.lwjgl.ovr.OVRUtil.ovr_Detect;
 import static org.lwjgl.ovr.OVRUtil.ovr_GetEyePoses;
 import static org.lwjgl.system.MemoryUtil.memAllocPointer;
@@ -239,7 +238,7 @@ public class OculusHmd {
         layers.put(0, vrEyesLayer);
 
         // FloorLevel will give tracking poses where the floor height is 0
-        ovr_SetTrackingOriginType(session, ovrTrackingOrigin_FloorLevel);
+        //ovr_SetTrackingOriginType(session, ovrTrackingOrigin_FloorLevel);
     }
 
     public boolean update() {
@@ -297,7 +296,7 @@ public class OculusHmd {
 
         final OVRVector3f positionL = eyePoses[ovrEye_Left].Position();
         final OVRVector3f positionR = eyePoses[ovrEye_Right].Position();
-        log.debug("L x: {}, y: {}, z:{} ---- R x: {}, y: {}, z:{}", positionL.x(), positionL.y(), positionL.z(), positionR.x(), positionR.y(), positionR.z());
+        //log.debug("L x: {}, y: {}, z:{} ---- R x: {}, y: {}, z:{}", positionL.x(), positionL.y(), positionL.z(), positionR.x(), positionR.y(), positionR.z());
 
         return true;
     }
@@ -349,14 +348,14 @@ public class OculusHmd {
         // player / head position and rotation in the scene (@TODO should be fetched from application)
         Matrix4f playerRotation = new Matrix4f();
         playerRotation.identity();
-        Vector3f playerPosition = new Vector3f(0, 0, -2);
+        Vector3f playerPosition = new Vector3f(0, 0, 2);
 
         // Current eye position
         Vector3f eyePosition = new Vector3f(eyePose.Position().x(), eyePose.Position().y(), eyePose.Position().z());
 
         // Transform current eye orientation to matrix
         Quaternionf eyeOrientation = new Quaternionf(eyePose.Orientation().x(), eyePose.Orientation().y(), eyePose.Orientation().z(), eyePose.Orientation().w());
-        eyeOrientation.invert();
+        //eyeOrientation.invert();
         Matrix4f eyeOrientationM = new Matrix4f();
         eyeOrientationM = eyeOrientation.get(eyeOrientationM);
 

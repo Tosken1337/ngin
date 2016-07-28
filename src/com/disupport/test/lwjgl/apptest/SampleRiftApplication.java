@@ -3,7 +3,6 @@ package com.disupport.test.lwjgl.apptest;
 import com.tosken.ngin.application.RiftApplication;
 import com.tosken.ngin.gl.*;
 import org.joml.Matrix4f;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
@@ -16,9 +15,7 @@ import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengles.GLES20.GL_COLOR_BUFFER_BIT;
-import static org.lwjgl.opengles.GLES20.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
 
 /**
  * Created by Sebastian Greif on 25.07.2016.
@@ -39,21 +36,25 @@ public class SampleRiftApplication extends RiftApplication {
 
     }
 
-    private float[][] clearColors = new float[][]{{1f, 0, 0}, {1f, 1f, 0f}};
+    private float[][] clearColors = new float[][]{{1f, 0, 0}, {0f, 1f, 0f}};
     int colorIndex = 0;
 
     @Override
     protected void onRenderFrame(double elapsedMillis, Matrix4f eyeViewM, Matrix4f projM, FrameBufferObject currentFrameBuffer) {
+        /*if (colorIndex == 1) {
+            return;
+        }*/
+
         currentFrameBuffer.bind();
         if (!currentFrameBuffer.isComplete()) {
             throw new RuntimeException("Framebuffer not complete");
         }
 
-        glClearColor(clearColors[colorIndex][0], clearColors[colorIndex][1], clearColors[colorIndex][2], 1);
+        //glClearColor(clearColors[colorIndex][0], clearColors[colorIndex][1], clearColors[colorIndex][2], 1);
         colorIndex = (colorIndex + 1) % 2;
 
         GL11.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         prog.bind();
         prog.setUniform("viewMat", eyeViewM);
