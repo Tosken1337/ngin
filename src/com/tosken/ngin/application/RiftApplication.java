@@ -91,6 +91,8 @@ public abstract class RiftApplication extends Application {
                     //log.debug("Viewport {} x: {}, y:{}, w: {}, h: {}", eye, viewport.Pos().x(), viewport.Pos().y(), viewport.Size().w(), viewport.Size().h());
                     GL11.glViewport(viewport.Pos().x(), viewport.Pos().y(), viewport.Size().w(), viewport.Size().h());
                     onRenderFrame(elapsedMillis, viewM, projM, currentFrameBuffer);
+
+                    hmd.commitFrame();
                 }
             }
 
@@ -166,6 +168,9 @@ public abstract class RiftApplication extends Application {
 
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
+
+        // Turn off vsync on oculus devices
+        glfwSwapInterval(0);
     }
 
     protected abstract void onInitApplication();
