@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="rxjava">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/libs/rxjava" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/libs/rxjava" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/libs/rxjava" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/libs/rxjava" recursive="false" type="SOURCES" />
+  </library>
+</component>
