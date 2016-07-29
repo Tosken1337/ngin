@@ -9,7 +9,6 @@ import com.tosken.ngin.application.DesktopApplication;
 public class ApplicationTest {
     public static void main(String[] args) {
         final DesktopApplication.Configuration config = new DesktopApplication.Configuration();
-        config.fullscreen = false;
         config.windowSize.set(1280, 768);
         config.numSamples = 4;
 

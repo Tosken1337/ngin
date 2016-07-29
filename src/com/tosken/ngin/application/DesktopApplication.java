@@ -86,7 +86,18 @@ public abstract class DesktopApplication extends Application {
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
 
         // Create the window
-        window = glfwCreateWindow(configuration.windowSize.x, configuration.windowSize.y, configuration.windowTitle, configuration.fullscreen ? glfwGetPrimaryMonitor() : NULL, NULL);
+        int windowWidth = configuration.windowSize.x;
+        int windowHeight = configuration.windowSize.y;
+
+        // Get the resolution of the primary monitor
+        GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        if (configuration.windowMode == Configuration.WindowMode.FullscreenWindow || configuration.windowMode == Configuration.WindowMode.ExclusiveFullscreen) {
+            windowWidth = videoMode.width();
+            windowHeight = videoMode.height();
+            glfwWindowHint(GLFW_MAXIMIZED, 1);
+        }
+
+        window = glfwCreateWindow(windowWidth, windowHeight, configuration.windowTitle, configuration.windowMode == Configuration.WindowMode.ExclusiveFullscreen ? glfwGetPrimaryMonitor() : NULL, NULL);
         if (window == NULL) {
             throw new RuntimeException("Failed to create the GLFW window");
         }
@@ -109,19 +120,18 @@ public abstract class DesktopApplication extends Application {
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
 
-        // Get the resolution of the primary monitor
-        GLFWVidMode videoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
-        if (configuration.fullscreen) {
+
+        if (configuration.windowMode == Configuration.WindowMode.ExclusiveFullscreen) {
             frameBufferSize.set(videoMode.width(), videoMode.height());
             GL.createCapabilities();
             onFrameBufferSizeChanged(frameBufferSize);
-        } else {
+        } else if(configuration.windowMode == Configuration.WindowMode.CustomWindowSize){
             // Center window
             glfwSetWindowPos(
                     window,
-                    (videoMode.width() - configuration.windowSize.x) / 2,
-                    (videoMode.height() - configuration.windowSize.y) / 2
+                    (videoMode.width() - windowWidth) / 2,
+                    (videoMode.height() - windowHeight) / 2
             );
         }
 
@@ -202,14 +212,18 @@ public abstract class DesktopApplication extends Application {
     protected abstract void onFrameBufferSizeChanged(final Vector2i frameBufferSize);
 
     public static class Configuration {
-        public boolean windowed = true;
+        public enum WindowMode {
+            CustomWindowSize,
+            FullscreenWindow,
+            ExclusiveFullscreen
+        }
+        public WindowMode windowMode = WindowMode.CustomWindowSize;
         public boolean resizable = true;
         public Vector2i windowSize = new Vector2i(1024, 768);
         public int numSamples = 0;
         public boolean vSync = true;
         public boolean debug = false;
         public String windowTitle = "tosken.ngin application";
-        public boolean fullscreen = false;
     }
 
 }
