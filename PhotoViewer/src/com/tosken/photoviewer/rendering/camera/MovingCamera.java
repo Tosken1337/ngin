@@ -20,7 +20,9 @@ public class MovingCamera {
         positionMover.maxDirectDeceleration = 5.0f;
 
         lookAtMover.current.set(lookAt);
+        lookAtMover.target.set(lookAt);
         positionMover.current.set(position);
+        positionMover.target.set(position);
     }
 
     /**
@@ -42,7 +44,7 @@ public class MovingCamera {
                 .rotateY((float) alphaMover.current)
                 .translate(-centerMover.current.x, -centerMover.current.y, -centerMover.current.z);*/
 
-        return null;
+        return new Matrix4f().lookAt(positionMover.current, lookAtMover.current, new Vector3f(0f, 1f, 0f)).mul(mat);
     }
 
     public void setLookAt(float x, float y, float z) {
