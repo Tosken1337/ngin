@@ -80,6 +80,8 @@ public abstract class RiftApplication extends Application {
                 final double elapsedMillis = (currentTime - lastTime) * 1000;
                 lastTime = currentTime;
 
+                executeGlActions();
+
                 final FrameBufferObject currentFrameBuffer = hmd.getCurrentFrameBuffer();
                 currentFrameBuffer.bind();
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -94,10 +96,8 @@ public abstract class RiftApplication extends Application {
                     final Matrix4f projM = hmd.getProjectionMatrix(eye);
                     final Matrix4f viewM = hmd.getViewMatrix(eye);
 
-                    //log.debug("Viewport {} x: {}, y:{}, w: {}, h: {}", eye, viewport.Pos().x(), viewport.Pos().y(), viewport.Size().w(), viewport.Size().h());
                     GL11.glViewport(viewport.Pos().x(), viewport.Pos().y(), viewport.Size().w(), viewport.Size().h());
                     onRenderFrame(elapsedMillis, viewM, projM, currentFrameBuffer);
-
                 }
                 hmd.commitFrame();
             }
@@ -179,17 +179,7 @@ public abstract class RiftApplication extends Application {
         glfwSwapInterval(0);
     }
 
-    protected abstract void onInitApplication();
-
-    protected abstract void onInitGL();
-
-    protected abstract void onUpdateFrame(double elapsedMillis);
-
     protected abstract void onRenderFrame(double elapsedMillis, Matrix4f eyeViewM, Matrix4f projM, FrameBufferObject currentFrameBuffer);
-
-    protected abstract void onCloseApplication();
-
-    protected abstract void onKeyEvent(final int action, final int key);
 
 
     public static class Configuration {

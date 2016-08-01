@@ -1,7 +1,10 @@
 package com.tosken.photoviewer;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.tosken.ngin.application.DesktopApplication;
 import com.tosken.photoviewer.app.PhotoViewerApplication;
+import com.tosken.photoviewer.inject.ProductionModule;
 
 /**
  * Created by Sebastian Greif on 29.07.2016.
@@ -15,7 +18,8 @@ public class Main {
         appConfig.resizable = false;
         appConfig.windowTitle = "PhotoViewer";
 
-        final PhotoViewerApplication app = new PhotoViewerApplication();
+        final Injector injector = Guice.createInjector(new ProductionModule());
+        final PhotoViewerApplication app = injector.getInstance(PhotoViewerApplication.class);
         app.run(appConfig);
     }
 }

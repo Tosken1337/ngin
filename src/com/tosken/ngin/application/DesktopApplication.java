@@ -137,9 +137,6 @@ public abstract class DesktopApplication extends Application {
 
         // Enable v-sync
         glfwSwapInterval(configuration.vSync ? 1 : 0);
-
-        // Make the window visible
-        //glfwShowWindow(window);
     }
 
     private void glLoop() {
@@ -157,6 +154,8 @@ public abstract class DesktopApplication extends Application {
             final double elapsedMillis = (currentTime - lastTime) * 1000;
             lastTime = currentTime;
 
+            executeGlActions();
+
             // Let the application perform application updates per frame (physics, input, ...)
             onUpdateFrame(elapsedMillis);
 
@@ -171,39 +170,12 @@ public abstract class DesktopApplication extends Application {
         }
     }
 
-    /**
-     *
-     * @param elapsedMillis
-     */
-    protected abstract void onUpdateFrame(final double elapsedMillis);
 
     /**
      *
      * @param elapsedMillis
      */
     protected abstract void onRenderFrame(final double elapsedMillis);
-
-    /**
-     *
-     */
-    protected abstract void onInitApplication();
-
-    /**
-     *
-     */
-    protected abstract void onInitGL();
-
-    /**
-     *
-     */
-    protected abstract void onCloseApplication();
-
-    /**
-     *
-     * @param action
-     * @param key
-     */
-    protected abstract void onKeyEvent(final int action, final int key);
 
     /**
      *

@@ -18,7 +18,7 @@ import java.nio.file.Paths;
 public class PhotoLibraryTest {
     @Test
     public void scan() throws Exception {
-        PhotoLibrary library = new PhotoLibrary(Paths.get("photos"));
+        SimplePhotoLibrary library = new SimplePhotoLibrary(Paths.get("photos"));
         library.scan();
 
         PhotoLibraryResourceManager resourceManager = new PhotoLibraryResourceManager(library, this::loadTexture);

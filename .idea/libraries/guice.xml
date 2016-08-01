@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="guice">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/PhotoViewer/libs/guice" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/PhotoViewer/libs/guice" recursive="false" />
+  </library>
+</component>

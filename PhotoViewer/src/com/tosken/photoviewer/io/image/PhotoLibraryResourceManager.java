@@ -6,7 +6,7 @@ import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifThumbnailDirectory;
 import com.tosken.ngin.gl.Texture;
 import com.tosken.photoviewer.model.Photo;
-import com.tosken.photoviewer.model.PhotoLibrary;
+import com.tosken.photoviewer.model.SimplePhotoLibrary;
 import com.tosken.photoviewer.util.ImageUtils;
 import rx.Observable;
 import rx.functions.Func2;
@@ -23,10 +23,10 @@ import java.util.Optional;
  * Time: 18:16
  */
 public class PhotoLibraryResourceManager {
-    private final PhotoLibrary library;
+    private final SimplePhotoLibrary library;
     private Func2<byte[], Dimension, Texture> textureLoad;
 
-    public PhotoLibraryResourceManager(final PhotoLibrary library, final Func2<byte[], Dimension, Texture> textureLoad) {
+    public PhotoLibraryResourceManager(final SimplePhotoLibrary library, final Func2<byte[], Dimension, Texture> textureLoad) {
         this.library = library;
         this.textureLoad = textureLoad;
     }

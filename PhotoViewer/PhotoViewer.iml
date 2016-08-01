@@ -24,5 +24,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="metadata" level="project" />
+    <orderEntry type="library" name="guice" level="project" />
   </component>
 </module>
