@@ -351,7 +351,7 @@ public class OculusHmd {
         Vector3f playerPosition = new Vector3f(0, 0, 2);
 
         // Current eye position
-        Vector3f eyePosition = new Vector3f(eyePose.Position().x(), eyePose.Position().y(), eyePose.Position().z());
+        Vector3f eyePosition = new Vector3f(eyePose.Position().x(), eyePose.Position().y(), eyePose.Position().z()).mul(1);
 
         // Transform current eye orientation to matrix
         Quaternionf eyeOrientation = new Quaternionf(eyePose.Orientation().x(), eyePose.Orientation().y(), eyePose.Orientation().z(), eyePose.Orientation().w());
