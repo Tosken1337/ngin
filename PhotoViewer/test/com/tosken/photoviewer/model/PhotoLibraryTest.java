@@ -21,11 +21,11 @@ public class PhotoLibraryTest {
         SimplePhotoLibrary library = new SimplePhotoLibrary(Paths.get("photos"));
         library.scan();
 
-        PhotoLibraryResourceManager resourceManager = new PhotoLibraryResourceManager(library, this::loadTexture);
-        resourceManager.loadExifData()
+        /*PhotoLibraryResourceManager resourceManager = new PhotoLibraryResourceManager(library);
+        resourceManager.loadExifData(this::loadTexture)
                 .subscribe(photoTextureResource -> {
                     System.out.println(photoTextureResource.photo);
-                });
+                });*/
     }
 
     public Texture loadTexture(byte[] imageData, Dimension size) {

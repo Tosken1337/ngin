@@ -1,6 +1,7 @@
 package com.tosken.photoviewer.app;
 
 import com.google.inject.Inject;
+import com.tosken.ngin.application.Application;
 import com.tosken.ngin.application.DesktopApplication;
 import com.tosken.photoviewer.io.image.PhotoLibraryResourceManager;
 import com.tosken.photoviewer.model.PhotoLibrary;
@@ -25,8 +26,6 @@ public class PhotoViewerApplication extends DesktopApplication {
     @Inject
     private PhotoRenderer renderer;
 
-    private PhotoLibraryResourceManager libraryResourceManager;
-
     @Override
     protected void onUpdateFrame(final double elapsedMillis) {
 
@@ -40,6 +39,7 @@ public class PhotoViewerApplication extends DesktopApplication {
     @Override
     protected void onInitApplication() {
         library.scan();
+        renderer.setLibrary(library);
     }
 
     @Override

@@ -23,6 +23,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public abstract class Application {
     protected static final Logger log = LoggerFactory.getLogger(Application.class);
 
+    private static Application instance;
+
     protected Keyboard keyboard = new Keyboard();
 
     private List<GlAction> glActions = new ArrayList<>();
@@ -31,11 +33,15 @@ public abstract class Application {
 
     private GlScheduler glScheduler = new GlScheduler();
 
-    protected interface GlAction {
+    protected Application() {
+        instance = this;
+    }
+
+    public interface GlAction {
         void execute();
     }
 
-    protected final void addGlAction(final GlAction action) {
+    public final void addGlAction(final GlAction action) {
         glActionLock.lock();
         try {
             glActions.add(action);
@@ -44,7 +50,7 @@ public abstract class Application {
         }
     }
 
-    protected final void removeGlAction(final GlAction action) {
+    public final void removeGlAction(final GlAction action) {
         glActionLock.lock();
         try {
             glActions.remove(action);
@@ -57,13 +63,18 @@ public abstract class Application {
         glActionLock.lock();
         try {
             glActions.forEach(GlAction::execute);
+            glActions.clear();
         } finally {
             glActionLock.unlock();
         }
     }
 
-    protected GlScheduler getGlScheduler() {
+    public GlScheduler getGlScheduler() {
         return glScheduler;
+    }
+
+    public static Application getApplication() {
+        return instance;
     }
 
     protected abstract void onInitApplication();

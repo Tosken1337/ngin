@@ -33,6 +33,7 @@ public abstract class DesktopApplication extends Application {
     private long window;
 
     protected DesktopApplication() {
+        super();
     }
 
     public final void run(final Configuration configuration) {

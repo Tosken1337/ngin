@@ -6,8 +6,10 @@ import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifThumbnailDirectory;
 import com.tosken.ngin.gl.Texture;
 import com.tosken.photoviewer.model.Photo;
+import com.tosken.photoviewer.model.PhotoLibrary;
 import com.tosken.photoviewer.model.SimplePhotoLibrary;
 import com.tosken.photoviewer.util.ImageUtils;
+import org.omg.CORBA.PolicyHolder;
 import rx.Observable;
 import rx.functions.Func2;
 
@@ -23,18 +25,16 @@ import java.util.Optional;
  * Time: 18:16
  */
 public class PhotoLibraryResourceManager {
-    private final SimplePhotoLibrary library;
-    private Func2<byte[], Dimension, Texture> textureLoad;
+    private final PhotoLibrary library;
 
-    public PhotoLibraryResourceManager(final SimplePhotoLibrary library, final Func2<byte[], Dimension, Texture> textureLoad) {
+    public PhotoLibraryResourceManager(final PhotoLibrary library) {
         this.library = library;
-        this.textureLoad = textureLoad;
     }
 
-    public Observable<PhotoTextureResource> loadExifData() {
+    public Observable<PhotoExifResource> loadExifData() {
         return library.photos()
                 .map(photo -> {
-                    PhotoTextureResource resource = new PhotoTextureResource();
+                    PhotoExifResource resource = new PhotoExifResource();
                     resource.photo = photo;
 
                     final Dimension size;
@@ -47,10 +47,8 @@ public class PhotoLibraryResourceManager {
                         if (metadata.containsDirectoryOfType(ExifThumbnailDirectory.class)) {
                             final ExifThumbnailDirectory thumbDir = metadata.getFirstDirectoryOfType(ExifThumbnailDirectory.class);
                             final byte[] thumbnailData = thumbDir.getThumbnailData();
-                            final Dimension thumbSize = ImageUtils.readImageSize(new ByteArrayInputStream(thumbnailData));
-
-                            final Texture tex = textureLoad.call(thumbnailData, thumbSize);
-                            resource.texture = Optional.ofNullable(tex);
+                            //final Dimension thumbSize = ImageUtils.readImageSize(new ByteArrayInputStream(thumbnailData));
+                            resource.exifThumb = Optional.ofNullable(thumbnailData);
                         }
                     } catch (IOException | ImageProcessingException e) {
                         e.printStackTrace();
@@ -63,6 +61,11 @@ public class PhotoLibraryResourceManager {
         return null;
     }
 
+
+    public static class PhotoExifResource {
+        public Photo photo;
+        public Optional<byte[]> exifThumb;
+    }
 
     public static class PhotoTextureResource {
         public Photo photo;

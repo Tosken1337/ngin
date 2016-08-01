@@ -1,5 +1,6 @@
 package com.tosken.photoviewer.rendering;
 
+import com.tosken.photoviewer.model.PhotoLibrary;
 import org.joml.Vector2i;
 
 /**
@@ -9,6 +10,8 @@ import org.joml.Vector2i;
 public interface PhotoRenderer {
 
     void onFrameBufferSizeChanged(Vector2i frameBufferSize);
+
+    void setLibrary(PhotoLibrary library);
 
     void initGl();
 

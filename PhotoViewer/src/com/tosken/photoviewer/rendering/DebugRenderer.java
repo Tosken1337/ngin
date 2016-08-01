@@ -1,17 +1,26 @@
 package com.tosken.photoviewer.rendering;
 
+import com.tosken.ngin.application.Application;
 import com.tosken.ngin.geometry.object.Quad;
 import com.tosken.ngin.gl.Shader;
 import com.tosken.ngin.gl.ShaderProgram;
 import com.tosken.ngin.gl.Texture;
+import com.tosken.photoviewer.io.image.PhotoLibraryResourceManager;
+import com.tosken.photoviewer.model.PhotoLibrary;
 import com.tosken.photoviewer.rendering.camera.MovingCamera;
 import org.joml.Matrix4f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -21,16 +30,28 @@ import static org.lwjgl.opengl.GL11.*;
  * Copyright di support 2016
  */
 public class DebugRenderer implements PhotoRenderer {
+    private static final Logger log = LoggerFactory.getLogger(DebugRenderer.class);
+
+    private PhotoLibrary library;
+
+    private PhotoLibraryResourceManager libraryResourceManager;
+
     private MovingCamera camera;
 
     private Matrix4f projM;
 
     private Quad quadObject;
-
     private ShaderProgram shaderProgram;
+
     private Texture texture;
 
     public DebugRenderer() {
+    }
+
+    @Override
+    public void setLibrary(final PhotoLibrary library) {
+        this.library = library;
+        libraryResourceManager = new PhotoLibraryResourceManager(library);
     }
 
     @Override
@@ -58,6 +79,17 @@ public class DebugRenderer implements PhotoRenderer {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        /*libraryResourceManager.loadExifData()
+                .subscribeOn(Schedulers.io())
+                .observeOn(Application.getApplication().getGlScheduler())
+                .subscribe(new Action1<PhotoLibraryResourceManager.PhotoExifResource>() {
+                    @Override
+                    public void call(final PhotoLibraryResourceManager.PhotoExifResource photoExifResource) {
+                        System.out.println("asd");
+                    }
+                });*/
+
     }
 
     @Override
