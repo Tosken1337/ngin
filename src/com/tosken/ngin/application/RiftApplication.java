@@ -3,6 +3,7 @@ package com.tosken.ngin.application;
 import com.tosken.ngin.gl.FrameBufferObject;
 import com.tosken.ngin.oculus.OculusHmd;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
@@ -70,6 +71,11 @@ public abstract class RiftApplication extends Application {
         glfwSetTime(0);
         double lastTime = 0;
         boolean isVisible = true;
+
+        final Vector3f camPos = new Vector3f(0, 0, 2);
+        final Matrix4f camOrientation = new Matrix4f();
+        camOrientation.identity();
+
         while (!glfwWindowShouldClose(window)) {
             if (!hmd.update()) {
                 //continue;
@@ -94,7 +100,7 @@ public abstract class RiftApplication extends Application {
                     // Let the application perform frame rendering for each eye
                     final OVRRecti viewport = hmd.getViewport(eye);
                     final Matrix4f projM = hmd.getProjectionMatrix(eye);
-                    final Matrix4f viewM = hmd.getViewMatrix(eye);
+                    final Matrix4f viewM = hmd.getViewMatrix(eye, camOrientation, camPos);
 
                     GL11.glViewport(viewport.Pos().x(), viewport.Pos().y(), viewport.Size().w(), viewport.Size().h());
                     onRenderFrame(elapsedMillis, viewM, projM, currentFrameBuffer);

@@ -4,6 +4,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.tosken.photoviewer.model.PhotoLibrary;
 import com.tosken.photoviewer.model.SimplePhotoLibrary;
+import com.tosken.photoviewer.rendering.DebugRenderer;
+import com.tosken.photoviewer.rendering.PhotoRenderer;
 
 import java.nio.file.Paths;
 
@@ -18,6 +20,7 @@ public class ProductionModule extends AbstractModule {
                 .annotatedWith(Names.named("LIBRARY_PATH"))
                 .toInstance(Paths.get("photos/"));*/
         //bind(PhotoLibrary.class).to(SimplePhotoLibrary.class);
+        bind(PhotoRenderer.class).to(DebugRenderer.class);
     }
 
     @Provides

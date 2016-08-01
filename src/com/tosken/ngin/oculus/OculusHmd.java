@@ -325,7 +325,7 @@ public class OculusHmd {
         return new Matrix4f(projections[eye].M()).transpose();
     }
 
-    public Matrix4f getViewMatrix(final int eye) {
+    public Matrix4f getViewMatrix(final int eye, final Matrix4f playerRot, final Vector3f playerPos) {
         final OVRPosef eyePose = eyePoses[eye];
 
         /*Matrix4f mat = new Matrix4f();
@@ -345,10 +345,10 @@ public class OculusHmd {
 
 
 
-        // player / head position and rotation in the scene (@TODO should be fetched from application)
-        Matrix4f playerRotation = new Matrix4f();
-        playerRotation.identity();
-        Vector3f playerPosition = new Vector3f(0, 0, 2);
+        // player / head position and rotation in the scene
+        //playerRotation.identity();
+        Matrix4f playerRotation = new Matrix4f(playerRot);
+        Vector3f playerPosition = new Vector3f(playerPos);
 
         // Current eye position
         Vector3f eyePosition = new Vector3f(eyePose.Position().x(), eyePose.Position().y(), eyePose.Position().z()).mul(1);

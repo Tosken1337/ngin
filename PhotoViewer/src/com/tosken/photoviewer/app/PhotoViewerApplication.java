@@ -22,9 +22,10 @@ public class PhotoViewerApplication extends DesktopApplication {
     @Inject
     private PhotoLibrary library;
 
-    private PhotoLibraryResourceManager libraryResourceManager;
-
+    @Inject
     private PhotoRenderer renderer;
+
+    private PhotoLibraryResourceManager libraryResourceManager;
 
     @Override
     protected void onUpdateFrame(final double elapsedMillis) {
@@ -33,7 +34,7 @@ public class PhotoViewerApplication extends DesktopApplication {
 
     @Override
     protected void onRenderFrame(final double elapsedMillis) {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        renderer.render(elapsedMillis);
     }
 
     @Override
@@ -43,8 +44,7 @@ public class PhotoViewerApplication extends DesktopApplication {
 
     @Override
     protected void onInitGL() {
-        //	96, 125, 139
-        glClearColor(96 / 255f, 125 / 255f, 139 / 255f, 1f);
+        renderer.initGl();
     }
 
     @Override
@@ -59,14 +59,9 @@ public class PhotoViewerApplication extends DesktopApplication {
 
     @Override
     protected void onFrameBufferSizeChanged(final Vector2i frameBufferSize) {
+        log.info("Framebuffer size changed to {} x {}", frameBufferSize.x, frameBufferSize.y);
         if (frameBufferSize.x > 0) {
-            log.info("Framebuffer size changed to {} x {}", frameBufferSize.x, frameBufferSize.y);
-            GL11.glViewport(0, 0, frameBufferSize.x, frameBufferSize.y);
-
-            /*projMat = new Matrix4f().perspective(((float) Math.toRadians(50.0f)), (float)frameBufferSize.x / (float)frameBufferSize.y, 0.1f, 100f);
-            viewMat = new Matrix4f().lookAt(0.0f, 0.0f, 2.0f,
-                    0.0f, 0.0f, 0.0f,
-                    0.0f, 1.0f, 0.0f);*/
+            renderer.onFrameBufferSizeChanged(frameBufferSize);
         }
     }
 }
