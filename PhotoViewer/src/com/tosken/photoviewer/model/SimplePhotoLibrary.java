@@ -42,4 +42,9 @@ public class SimplePhotoLibrary implements PhotoLibrary {
     public Observable<Photo> photos() {
         return Observable.from(photos);
     }
+
+    @Override
+    public List<Photo> photoList() {
+        return photos;
+    }
 }

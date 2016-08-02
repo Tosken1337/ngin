@@ -118,7 +118,7 @@ public abstract class Application {
 
                 addGlAction(glEvent);
 
-                action.add(Subscriptions.create(() -> removeGlAction(glEvent)));
+                //action.add(Subscriptions.create(() -> removeGlAction(glEvent)));
 
                 return action;
             }

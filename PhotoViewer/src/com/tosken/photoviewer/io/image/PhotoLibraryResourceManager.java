@@ -10,12 +10,16 @@ import com.tosken.photoviewer.model.PhotoLibrary;
 import com.tosken.photoviewer.model.SimplePhotoLibrary;
 import com.tosken.photoviewer.util.ImageUtils;
 import org.omg.CORBA.PolicyHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.functions.Func2;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 /**
@@ -25,10 +29,20 @@ import java.util.Optional;
  * Time: 18:16
  */
 public class PhotoLibraryResourceManager {
+    private static final Logger log = LoggerFactory.getLogger(PhotoLibraryResourceManager.class);
+
     private final PhotoLibrary library;
+
+    private final Storage tmpStorage;
 
     public PhotoLibraryResourceManager(final PhotoLibrary library) {
         this.library = library;
+        tmpStorage = new Storage(Paths.get("tmp/"));
+        try {
+            tmpStorage.init();
+        } catch (IOException e) {
+            log.error("Unable to init storage", e);
+        }
     }
 
     public Observable<PhotoExifResource> loadExifData() {
@@ -47,8 +61,10 @@ public class PhotoLibraryResourceManager {
                         if (metadata.containsDirectoryOfType(ExifThumbnailDirectory.class)) {
                             final ExifThumbnailDirectory thumbDir = metadata.getFirstDirectoryOfType(ExifThumbnailDirectory.class);
                             final byte[] thumbnailData = thumbDir.getThumbnailData();
+                            final Path thumbFile = tmpStorage.saveAsImage(photo.getFile().toAbsolutePath(), thumbnailData);
+
                             //final Dimension thumbSize = ImageUtils.readImageSize(new ByteArrayInputStream(thumbnailData));
-                            resource.exifThumb = Optional.ofNullable(thumbnailData);
+                            resource.exifThumb = Optional.ofNullable(thumbFile);
                         }
                     } catch (IOException | ImageProcessingException e) {
                         e.printStackTrace();
@@ -64,11 +80,11 @@ public class PhotoLibraryResourceManager {
 
     public static class PhotoExifResource {
         public Photo photo;
-        public Optional<byte[]> exifThumb;
+        public Optional<Path> exifThumb;
     }
 
     public static class PhotoTextureResource {
         public Photo photo;
-        public Optional<Texture> texture;
+        public Optional<Path> thumb;
     }
 }
