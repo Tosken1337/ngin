@@ -56,17 +56,15 @@ public class PhotoLibraryResourceManager {
                         size = ImageUtils.readImageSize(photo.getFile());
                         photo.setWidth(size.width);
                         photo.setHeight(size.height);
+                        photo.setOrientation(ImageUtils.readExifRotation(photo.getFile()));
 
-                        Metadata metadata = ImageMetadataReader.readMetadata(photo.getFile().toFile());
-                        if (metadata.containsDirectoryOfType(ExifThumbnailDirectory.class)) {
-                            final ExifThumbnailDirectory thumbDir = metadata.getFirstDirectoryOfType(ExifThumbnailDirectory.class);
-                            final byte[] thumbnailData = thumbDir.getThumbnailData();
-                            final Path thumbFile = tmpStorage.saveAsImage(photo.getFile().toAbsolutePath(), thumbnailData);
-
-                            //final Dimension thumbSize = ImageUtils.readImageSize(new ByteArrayInputStream(thumbnailData));
+                        final byte[] bytes = ImageUtils.readThumbnail(photo.getFile());
+                        if (bytes != null) {
+                            final Path thumbFile = tmpStorage.saveAsImage(photo.getFile().toAbsolutePath(), bytes);
+                            //final Dimension thumbSize = ImageUtils.readImageSize(new ByteArrayInputStream(bytes));
                             resource.exifThumb = Optional.ofNullable(thumbFile);
                         }
-                    } catch (IOException | ImageProcessingException e) {
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                     return resource;

@@ -28,6 +28,24 @@ public class Storage {
     public void init() throws IOException {
         if (!Files.exists(path)) {
             Files.createDirectories(path);
+        } else {
+            clear();
+        }
+    }
+
+    public void clear() {
+        try {
+            Files.list(path)
+                    .filter(path1 -> !Files.isDirectory(path1))
+                    .forEachOrdered(path1 -> {
+                        try {
+                            Files.delete(path1);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

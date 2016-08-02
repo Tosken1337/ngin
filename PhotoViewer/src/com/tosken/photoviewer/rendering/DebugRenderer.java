@@ -97,6 +97,7 @@ public class DebugRenderer implements PhotoRenderer {
                     }
                 });
 
+        //camera.setLookAt(1, 8, 0);
     }
 
     @Override
@@ -118,14 +119,14 @@ public class DebugRenderer implements PhotoRenderer {
         int row = 0;
         int coloumn = 0;
         for (final Map.Entry<Photo, Texture> photoEntry : textureMap.entrySet()) {
-            float xOffset = (float)coloumn++ * 1.1f;
-            if (coloumn > 2) {
+            if (coloumn > 3) {
                 coloumn = 0;
                 row++;
             }
+            float xOffset = (float)coloumn++ * 1.1f;
             float yOffset = row * 1.1f;
-            shaderProgram.setUniform("viewMat", camera.viewMatrix(new Matrix4f().identity().translate(-xOffset, yOffset, 0)));
-
+            shaderProgram.setUniform("viewMat", camera.viewMatrix(
+                    new Matrix4f().identity().translate(-xOffset, yOffset, 0).rotate((float)Math.toRadians(photoEntry.getKey().getRotation()), 0, 0, 1)));
             final Texture texture = photoEntry.getValue();
             texture.bind();
 
@@ -147,22 +148,6 @@ public class DebugRenderer implements PhotoRenderer {
 
 
         shaderProgram.unbind();
-
-        /*texture.bind();
-
-        quadObject.getVao().bind();
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glEnableVertexAttribArray(1);
-
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, quadObject.getVboIndices().getId());
-
-        GL11.glDrawElements(GL11.GL_TRIANGLES, quadObject.getVboIndices().size(), GL11.GL_UNSIGNED_INT, 0);
-
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
-
-        texture.unbind();
-        quadObject.getVao().unbind();
-        shaderProgram.unbind();*/
     }
 
     @Override

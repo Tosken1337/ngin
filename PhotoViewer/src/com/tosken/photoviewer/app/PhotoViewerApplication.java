@@ -11,6 +11,8 @@ import org.lwjgl.opengl.GL11;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE;
+import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 import static org.lwjgl.opengl.GL11.*;
 
 /**
@@ -54,7 +56,9 @@ public class PhotoViewerApplication extends DesktopApplication {
 
     @Override
     protected void onKeyEvent(final int action, final int key) {
-
+        if (action == GLFW_RELEASE && key == GLFW_KEY_SPACE) {
+            //renderer.getCamera()
+        }
     }
 
     @Override

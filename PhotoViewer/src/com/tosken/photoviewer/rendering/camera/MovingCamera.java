@@ -14,10 +14,10 @@ public class MovingCamera {
     private Vector3Mover positionMover = new Vector3Mover();
 
     public MovingCamera(final Vector3f position, final Vector3f lookAt) {
-        lookAtMover.maxDirectAcceleration = 5.0f;
-        lookAtMover.maxDirectDeceleration = 5.0f;
-        positionMover.maxDirectAcceleration = 5.0f;
-        positionMover.maxDirectDeceleration = 5.0f;
+        lookAtMover.maxDirectAcceleration = 1.0f;
+        lookAtMover.maxDirectDeceleration = 1.0f;
+        positionMover.maxDirectAcceleration = 1.0f;
+        positionMover.maxDirectDeceleration = 1.0f;
 
         lookAtMover.current.set(lookAt);
         lookAtMover.target.set(lookAt);
@@ -49,6 +49,11 @@ public class MovingCamera {
 
     public void setLookAt(float x, float y, float z) {
         lookAtMover.target.set(x, y, z);
+    }
+
+    public void moveAt(float x, float y, float z) {
+        lookAtMover.target.set(x, y, z);
+        positionMover.target.set(x, y, z);
     }
 
     public void update(float elapsedTimeInSeconds) {

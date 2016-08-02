@@ -10,6 +10,7 @@ public class Photo {
     private final Path file;
     private int width;
     private int height;
+    private int rotation;
 
     public Photo(final Path file, final int width, final int height) {
         this.file = file;
@@ -33,6 +34,10 @@ public class Photo {
         return height;
     }
 
+    public int getRotation() {
+        return rotation;
+    }
+
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("Photo{");
@@ -49,5 +54,9 @@ public class Photo {
 
     public void setHeight(int height) {
         this.height = height;
+    }
+
+    public void setOrientation(final int rotation) {
+        this.rotation = rotation;
     }
 }
